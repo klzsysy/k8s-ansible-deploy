@@ -1,0 +1,78 @@
+---
+  - name: copy etcd file to host
+    copy:
+      src: ../generate/etcd-{{ etcd_ver }}-linux-amd64/etcd
+      dest: /usr/bin/
+      mode: 0775
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+
+  - name: copy etcdctl file to host
+    copy:
+      src: ../generate/etcd-{{ etcd_ver }}-linux-amd64/etcdctl
+      dest: /usr/bin/
+      mode: 0775
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+  - name: mkdir etcd data folder
+    file:
+      name: /var/lib/etcd
+      state: directory
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+  - name: mkdir etcd ssl folder
+    file:
+      name: /etc/etcd/ssl
+      state: directory 
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+  - name: copy certificate ca.pem to host
+    copy:
+      src: ../generate/ca.pem
+      dest: /etc/etcd/ssl/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+
+  - name: copy certificate etcd-key.pem to host
+    copy:
+      src: ../generate/etcd-key.pem
+      dest: /etc/etcd/ssl/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+  - name: copy certificate etcd.pem to host
+    copy:
+      src: ../generate/etcd.pem
+      dest: /etc/etcd/ssl/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+

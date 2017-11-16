@@ -1,0 +1,46 @@
+---
+  - name: check cni-plugins bin exists or not
+    stat:
+      path: ../generate/cni-plugins-amd64-{{ cni_plugins_ver }}.tgz
+    register: cni_plugins_tar
+
+  - name: check cni-plugins dir exists or not
+    stat:
+      path: ../generate/cni-plugins-amd64-{{ cni_plugins_ver }}
+    register: cni_plugins_dir
+
+  - name: pre mkdir folder
+    file:
+      path: /tmp/cni-plugins-amd64-{{ cni_plugins_ver }}
+      state: directory
+
+  - name: unzip cni-plugins.tar.gz
+    unarchive:
+      src: ../generate/cni-plugins-amd64-{{ cni_plugins_ver }}.tgz
+      dest: /tmp/cni-plugins-amd64-{{ cni_plugins_ver }}
+#      dest: ../generate/
+    register: unzip_stat
+    ignore_errors: true
+    when: (cni_plugins_dir.stat.exists == false) and (cni_plugins_tar.stat.exists == true)
+
+  - name: download cni-plugins bin file
+    shell: cd ../generate && wget {{ cni_plugins_url }}/{{ cni_plugins_ver }}/cni-plugins-amd64-{{ cni_plugins_ver }}.tgz  && mkdir -p cni-plugins-amd64-{{ cni_plugins_ver }} && tar -xzvf cni-plugins-amd64-{{ cni_plugins_ver }}.tgz -C cni-plugins-amd64-{{ cni_plugins_ver }}
+    when: (cni_plugins_tar.stat.exists == false) and (cni_plugins_dir.stat.exists == false)
+    register: down_stat
+
+  - name: clear invalid file
+    file: name=../generate/cni-plugins-amd64-{{ cni_plugins_ver }}.tgz state=absent
+    register: clear_stat
+    when: unzip_stat|failed
+
+  - name: stop running!
+    debug:
+      msg: "stop! need {{ obj }} file"
+    register: stop
+    failed_when: "'stop' in stop.msg"
+    when: clear_stat.changed == true
+
+  - name: mv to cni-plugins folder
+    shell: cd ../generate && mkdir -p cni-plugins-amd64-{{ cni_plugins_ver }} && mv -f /tmp/cni-plugins-amd64-{{ cni_plugins_ver }}/* cni-plugins-amd64-{{ cni_plugins_ver }} && rm -rf /tmp/cni-plugins-amd64-{{ cni_plugins_ver }}
+    when: unzip_stat.changed == true
+    # when: unzip_stat|success

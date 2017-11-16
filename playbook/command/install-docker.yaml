@@ -1,0 +1,9 @@
+---
+  - hosts: nodes
+    vars:
+      svc: docker
+    tasks:
+      - include_tasks: ../tasks/install-docker.yaml 
+
+    handlers:
+      - include: ../handlers/systemctl.yaml

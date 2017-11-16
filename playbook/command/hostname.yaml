@@ -1,0 +1,5 @@
+- hosts : cluster
+  remote_user : root
+  tasks :
+  - hostname : name={{ inventory_hostname }}
+  - include: ../tasks/debug.yaml

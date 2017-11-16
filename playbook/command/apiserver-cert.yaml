@@ -1,0 +1,71 @@
+---
+  - hosts: lb
+    tasks:
+      - name: get lb host info
+        debug: msg='running...'
+
+  - hosts: masters
+    tasks:
+      - name: get masters host info
+        debug: msg='running...'
+
+  - hosts: localhost
+    connection: local
+    vars:
+      svc: kube-apiserver
+    tasks:
+      - name: check apiserver csr exists or not
+        stat: 
+          path: ../generate/apiserver.csr
+        register: apiserver_csr
+    
+      - name: check apiserver pem exists or not
+        stat:
+          path: ../generate/apiserver.pem
+        register: apiserver_pem
+    
+      - name: check apiserver key exists or not
+        stat:
+          path: ../generate/apiserver-key.pem
+        register: apiserver_key
+    
+      - name: check apiserver cert json exists or not
+        stat:
+          path: ../generate/apiserver-csr.json
+        register: apiserver_json
+
+      - name: get masters cluster ip
+        shell: "echo {% for host in groups['masters'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: MASTER_IP
+        when: apiserver_json.stat.exists == false
+
+      - name: get lb node ip
+        shell: "echo {% for host in groups['lb'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: LB_IP
+        when: apiserver_json.stat.exists == false
+
+      - name: get lb info
+        shell: "echo {% for host in groups['lb_info'] %}
+                        {{ host }}
+                     {% endfor %}"
+        register: LB_INFO
+        when: apiserver_json.stat.exists == false
+
+      - name: create kube-apiserver cert json
+        shell: cat ../template/json_template/apiserver-csr.json | ../tools/format_json_template2.py add {{ MASTER_IP.stdout }} {{ LB_IP.stdout }} {{ LB_INFO.stdout }}  > ../generate/apiserver-csr.json
+        when: apiserver_json.stat.exists == false
+        register: kube_apiserver
+
+      - name: apply svc_addr vars
+        shell: echo {{ service_cluster_ip_range }} | awk -F. '{printf "%s.%s.%s.1",$1,$2,$3}' | xargs -I {} sed -i "s/svc_addr/{}/g" ../generate/apiserver-csr.json 
+        when: kube_apiserver.changed == true
+
+      - name: create apiserver key and cert
+        shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/apiserver-csr.json | cfssljson -bare ../generate/apiserver
+        when: (apiserver_csr.stat.exists == false) or
+          (apiserver_pem.stat.exists == false) or
+          (apiserver_key.stat.exists == false)

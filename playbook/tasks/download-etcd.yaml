@@ -1,0 +1,37 @@
+---
+  - name: check etcd bin exists or not
+    stat:
+      path: ../generate/etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+    register: etcd_tar
+
+  - name: check etcd dir exists or not
+    stat:
+      path: ../generate/etcd-{{ etcd_ver }}-linux-amd64
+    register: etcd_dir
+
+  - name: unzip etcd.tar.gz
+    unarchive:
+      src: ../generate/etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+      dest: ../generate/
+    register: unzip_stat
+    ignore_errors: true
+    when: (etcd_dir.stat.exists == false) and (etcd_tar.stat.exists == true)
+
+  - name: download etcd bin file
+    shell: cd ../generate && wget {{ etcd_url }}/{{ etcd_ver }}/etcd-{{ etcd_ver }}-linux-amd64.tar.gz  && tar -xzvf etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+    when: (etcd_tar.stat.exists == false) and (etcd_dir.stat.exists == false)
+    register: down_stat
+
+  - name: clear invalid file
+    shell: "rm -rf ../generate/etcd-{{ etcd_ver }}-linux-amd64.tar.gz | true"
+    notify:
+    - clear file
+    register: clear_stat
+    when: unzip_stat|failed
+
+  - name: stop running!
+    debug:
+      msg: "stop! need {{ obj }} file"
+    register: stop
+    failed_when: "'stop' in stop.msg"
+    when: clear_stat.changed == true

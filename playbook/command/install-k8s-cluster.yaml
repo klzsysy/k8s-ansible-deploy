@@ -1,0 +1,28 @@
+---
+# 安装控制机依赖
+- import_playbook: control.yaml
+
+# 修改主机名
+- import_playbook: hostname.yaml
+
+# 安装系统基本依赖
+- import_playbook: system_base.yaml 
+
+# 关闭防火墙
+- import_playbook: firewalld.yaml
+
+# 下载二进制文件
+- import_playbook: download_bin.yaml
+
+# install docker
+- import_playbook: install-docker.yaml
+
+# 创建证书
+- import_playbook: cert.yaml
+
+# 安装etcd
+- import_playbook: install-etcd-cluster.yaml
+
+# 安装 apiserver
+- import_playbook: install-kube-apiserver.yaml
+

@@ -1,0 +1,42 @@
+---
+  - name: check k8s bin exists or not
+    stat:
+      path: ../generate/{{ k8s_ver }}-{{ k8s_file }}
+    register: k8s_tar
+
+  - name: check k8s dir exists or not
+    stat:
+      path: ../generate/{{ k8s_ver }}-kubernetes
+    register: k8s_dir
+
+  - name: unzip k8s tar.gz
+    unarchive:
+      src: ../generate/{{ k8s_ver }}-{{ k8s_file }}
+      dest: ../generate/
+    register: unzip_stat
+    ignore_errors: true
+    when: (k8s_dir.stat.exists == false) and (k8s_tar.stat.exists == true)
+
+  - name: download k8s bin file
+    shell: cd ../generate && curl -o {{ k8s_ver }}-{{ k8s_file }} {{ k8s_url }}/{{ k8s_ver }}/{{ k8s_file }}  && tar -xzvf {{ k8s_ver }}-{{ k8s_file }}
+    when: (k8s_tar.stat.exists == false) and (k8s_dir.stat.exists == false)
+    register: down_stat
+
+  - name: clear invalid file
+    shell: "rm -rf ../generate/{{ k8s_ver }}-{{ k8s_file }} | true"
+    notify:
+    - clear file
+    register: clear_stat
+    when: unzip_stat|failed
+
+  - name: stop running!
+    debug:
+      msg: "stop! need {{ obj }} file"
+    register: stop
+    failed_when: "'stop' in stop.msg"
+    when: clear_stat.changed == true
+
+  # 修改k8s文件夹名
+  - name: update version tag
+    shell: cd ../generate && mv kubernetes {{ k8s_ver }}-kubernetes
+    when: (down_stat.changed == true) or (unzip_stat.changed == true)

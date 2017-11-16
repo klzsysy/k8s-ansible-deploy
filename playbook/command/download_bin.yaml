@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no    
+  vars:
+    obj: ../generate/etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+
+  tasks:
+    - include_tasks: ../tasks/download-etcd.yaml
+    - include_tasks: ../tasks/download-k8s.yaml
+    - include_tasks: ../tasks/download-cni.yaml
+    - include_tasks: ../tasks/download-cni-plugins.yaml
+  handlers:
+    - include: ../handlers/clear_file.yaml

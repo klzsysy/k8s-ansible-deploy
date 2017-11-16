@@ -1,0 +1,12 @@
+---
+- name: copy docerk init tools to host
+  copy:
+    src: ../tools/install_docker.sh
+    dest: /tmp/
+    mode: 555
+
+- name: install docker , storage use  direct-lvm
+  shell: /tmp/install_docker.sh {{ docker_storage }}
+  notify:
+    - restart svc
+    - enable svc

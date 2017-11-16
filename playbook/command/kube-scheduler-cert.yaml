@@ -1,0 +1,66 @@
+---
+  - hosts: lb
+    tasks:
+      - name: get lb host info
+        debug: msg='running...'
+
+  - hosts: nodes
+    tasks:
+      - name: get nodes host info
+        debug: msg='running...'
+
+  - hosts: localhost
+    connection: local
+    vars:
+      svc: kube-scheduler
+    tasks:
+      - name: check scheduler csr exists or not
+        stat: 
+          path: ../generate/scheduler.csr
+        register: scheduler_csr
+    
+      - name: check scheduler pem exists or not
+        stat:
+          path: ../generate/scheduler.pem
+        register: scheduler_pem
+    
+      - name: check scheduler key exists or not
+        stat:
+          path: ../generate/scheduler-key.pem
+        register: scheduler_key
+    
+      - name: check scheduler cert json exists or not
+        stat:
+          path: ../generate/scheduler-csr.json
+        register: scheduler_json
+
+      - name: get masters cluster ip
+        shell: "echo {% for host in groups['nodes'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: NODES_IP
+        when: scheduler_json.stat.exists == false
+
+      - name: get lb node ip
+        shell: "echo {% for host in groups['lb'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: LB_IP
+        when: scheduler_json.stat.exists == false
+
+      - name: get lb info
+        shell: "echo {% for host in groups['lb_info'] %}
+                        {{ host }}
+                     {% endfor %}"
+        register: LB_INFO
+        when: scheduler_json.stat.exists == false
+
+      - name: create kube-scheduler cert json
+        shell: cat ../template/json_template/scheduler-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ LB_INFO.stdout }}  > ../generate/scheduler-csr.json
+        when: scheduler_json.stat.exists == false
+
+      - name: create scheduler key and cert
+        shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/scheduler-csr.json | cfssljson -bare ../generate/scheduler
+        when: (scheduler_csr.stat.exists == false) or
+          (scheduler_pem.stat.exists == false) or
+          (scheduler_key.stat.exists == false)

@@ -1,0 +1,10 @@
+---
+  - name: install unzip
+    yum:
+      name: unzip
+      state: present
+
+  - name: install nslookup
+    yum:
+      name: bind-utils
+      state: present

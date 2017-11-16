@@ -1,0 +1,40 @@
+---
+  - name: check cni bin exists or not
+    stat:
+      path: ../generate/cni-amd64-{{ cni_ver }}.tgz
+    register: cni_tar
+
+  - name: check cni dir exists or not
+    stat:
+      path: ../generate/cni-amd64-{{ cni_ver }}
+    register: cni_dir
+
+  - name: unzip cni.tar.gz
+    unarchive:
+      src: ../generate/cni-amd64-{{ cni_ver }}.tgz
+      dest: ../generate/
+    register: unzip_stat
+    ignore_errors: true
+    when: (cni_dir.stat.exists == false) and (cni_tar.stat.exists == true)
+
+  - name: download cni bin file
+    shell: cd ../generate && wget {{ cni_url }}/{{ cni_ver }}/cni-amd64-{{ cni_ver }}.tgz  && mkdir -p cni-amd64-{{ cni_ver }} && tar -xzvf cni-amd64-{{ cni_ver }}.tgz -C cni-amd64-{{ cni_ver }}
+    when: (cni_tar.stat.exists == false) and (cni_dir.stat.exists == false)
+    register: down_stat
+
+  - name: clear invalid file
+    file: name=../generate/cni-amd64-{{ cni_ver }}.tgz state=absent
+    register: clear_stat
+    when: unzip_stat|failed
+
+  - name: stop running!
+    debug:
+      msg: "stop! need {{ obj }} file"
+    register: stop
+    failed_when: "'stop' in stop.msg"
+    when: clear_stat.changed == true
+
+  - name: mv to cni folder
+    shell: cd ../generate && mkdir -p cni-amd64-{{ cni_ver }} && mv cnitool noop cni-amd64-{{ cni_ver }} || true
+    when: unzip_stat.changed == true
+    # when: unzip_stat|success

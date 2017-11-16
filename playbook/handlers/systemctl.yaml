@@ -1,0 +1,26 @@
+---
+  - name: debug
+    debug:
+      msg: "svc = {{ svc }}"
+  - name: reload svc
+    command: systemctl daemon-reload
+
+  - name: start svc
+    service:
+      name: "{{ svc }}"
+      state: started
+
+  - name: enable svc
+    service:
+      name: "{{ svc }}"
+      enabled: yes
+
+  - name: restart svc
+    service:
+      name: "{{ svc }}"
+      state: restarted
+
+  - name: stop svc
+    service:
+      name: "{{ svc }}"
+      state: stopped

@@ -1,0 +1,22 @@
+---
+  - name: check ca csr exists or not
+    stat: 
+      path: ../generate/ca.csr
+    register: ca_csr
+
+  - name: check ca pen exists or not
+    stat:
+      path: ../generate/ca.pem
+    register: ca_pem
+
+  - name: check ca key exists or not
+    stat:
+      path: ../generate/ca-key.pem
+    register: ca_key
+
+  - name: create ca key and cert
+    shell: cfssl gencert -initca ../template/json_template/ca-csr.json | cfssljson -bare ../generate/ca
+    when: (ca_csr.stat.exists == false) or
+      (ca_pem.stat.exists == false) or
+      (ca_key.stat.exists == false)
+    

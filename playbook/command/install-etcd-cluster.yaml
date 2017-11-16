@@ -1,0 +1,35 @@
+---
+  - hosts: etcd
+    vars:
+      svc: etcd
+    tasks:
+      - include_tasks: ../tasks/etcd-file-copy.yaml
+
+      - name: get etcd cluster hostname
+        shell: "echo {% for host in groups['etcd'] %}
+                        {{ hostvars[host]['ansible_fqdn'] }}
+                     {% endfor %}"
+        register: ETCD_NAME
+
+      - name: get etcd cluster ip
+        shell: "echo {% for host in groups['etcd'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: ETCD_IP
+
+      - name: build etcd cluster service args
+        shell: urls=$(echo -e "{{ ETCD_NAME.stdout }}\n{{ ETCD_IP.stdout }}" | awk '{for(i=1;i<=NF;i=i+1){a[NR,i]=$i}}END{for(j=1;j<=NF;j++){str=a[1,j];for(i=2;i<=NR;i++){str=str " " a[i,j]}print str}}' | awk '{printf "%s=https://%s:2380,",$1,$2}'); echo ${urls:0:-1}
+        register: CLUSTER_NODE_URL
+
+      - name: copy etcd.service to cluster host
+        template:
+          src: ../template/service_template/etcd.service 
+          dest: /usr/lib/systemd/system/etcd.service
+          mode: 644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+    handlers:
+      - include: ../handlers/systemctl.yaml

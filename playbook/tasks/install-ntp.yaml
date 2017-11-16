@@ -1,0 +1,27 @@
+#- hosts: cluster
+#  remote_user: root
+#  tasks:
+---
+  - name: install ntpd
+    yum: name=ntp  state=present
+
+  - name: stop ntpd service
+    service: name=ntpd state=stopped
+
+  - name: update time
+    shell: ntpdate {{ ntp_server }}
+    notify:
+    - restart svc
+    register: ntp_state
+  
+  - name: ntpd service enable
+    service: name=ntpd enabled=yes
+
+  - name: update time 2
+    shell: "nslookup 1.cn.pool.ntp.org 114.114.114.114 | tail -n 2 | head -n1 | awk -F: '{print $2}' | xargs ntpdate"
+    notify:
+    - restart svc
+    when: ntp_state.rc != 0
+#    handlers:
+#    - name: restart ntpd
+#      service: name=ntpd state=restarted 

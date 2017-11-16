@@ -1,0 +1,45 @@
+---
+  - hosts: etcd
+    tasks:
+      - name: get etcd host info
+        debug: msg='running...' 
+
+  - hosts: masters
+    vars:
+      svc: kube-apiserver
+    tasks:
+      - include_tasks: ../tasks/apiserver-file-copy.yaml
+#        notify:
+#          - restart svc
+#          - enable svc
+#          - debug
+
+      - name: count master cluster
+        shell: "a=0  {% for host in groups['masters'] %}
+                        a=$(expr $a + 1)
+                     {% endfor %}; echo $a"
+        register: MASTER_COUNT
+
+      - name: get etcd cluster ip
+        shell: "echo {% for host in groups['etcd'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: ETCD_IP
+
+      - name: build etcd cluster service args
+        shell: etcds=; for x in `echo {{ ETCD_IP.stdout }}`; do etcds="https://$x:2379,$etcds";done ; echo ${etcds:0:-1}
+        register: ETCD_CLUSTER_NODE_URL
+
+      - name: copy kube-apiserver service to cluster host
+        template:
+          src: ../template/service_template/kube-apiserver.service 
+          dest: /usr/lib/systemd/system/kube-apiserver.service
+          mode: 644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+
+    handlers:
+      - include: ../handlers/systemctl.yaml

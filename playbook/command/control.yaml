@@ -1,0 +1,42 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    svc: ntpd
+  tasks:
+    - name: check go 
+      shell: which go
+      register: go_state
+
+    - name: install go
+      yum: name=go state=present
+      when: go_state.rc != 0
+
+    - name: check cfssl tools
+      shell: which cfssl
+      register: cfssl_status
+      ignore_errors: True
+
+    - name: install cfssl tools
+      shell: go get -u github.com/cloudflare/cfssl/cmd/...
+      when: cfssl_status.rc != 0
+      register: cfssl
+    
+    - name: check cfssl env PATH
+      shell: test -f /etc/profile.d/go_bin.sh
+      register: cfssl_file
+      ignore_errors: True
+
+    - name: add go pkg path to PATH
+      shell: bash ../template/sh_template/go_env.sh
+      when: cfssl_file.rc != 0
+
+    - name: create generate folder
+      file:
+        path: ../generate
+        state: directory
+
+    - include: ../tasks/install-ntp.yaml
+    - include: ../tasks/base-rpm.yaml
+  handlers:
+    - include: ../handlers/systemctl.yaml

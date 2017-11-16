@@ -1,0 +1,5 @@
+---
+- name: clear file
+  file: 
+    name: "{{ obj }}"
+    state: absent

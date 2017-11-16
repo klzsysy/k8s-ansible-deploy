@@ -1,0 +1,31 @@
+---
+  - name: check etcd csr exists or not
+    stat: 
+      path: ../generate/etcd.csr
+    register: etcd_csr
+
+  - name: check etcd pem exists or not
+    stat:
+      path: ../generate/etcd.pem
+    register: etcd_pem
+
+  - name: check etcd key exists or not
+    stat:
+      path: ../generate/etcd-key.pem
+    register: etcd_key
+
+  - name: check etcd cert json exists or not
+    stat:
+      path: ../generate/etcd-csr.json
+    register: etcd_json
+
+  - name: create etcd cert json
+    shell: cat ../template/json_template/etcd-csr.json | ../tools/format_json_template.py $( ../tools/cert_host_list.sh ../../inventory) > ../generate/etcd-csr.json
+    when: etcd_json.stat.exists == false
+
+  - name: create etcd key and cert
+    shell: cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/etcd-csr.json | cfssljson -bare ../generate/etcd
+    when: (etcd_csr.stat.exists == false) or
+      (etcd_pem.stat.exists == false) or
+      (etcd_key.stat.exists == false)
+    

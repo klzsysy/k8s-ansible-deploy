@@ -1,0 +1,12 @@
+---
+- hosts: cluster
+  user: root
+  tasks:
+  - name: echo system
+    shell: echo {{ ansible_os_family }}
+    when: ansible_os_family == "Debian"
+  - name: install ntp on redhat linux
+    yum: name=git state=present
+    when: ansible_os_family == "RedHat"
+  - name: test2
+    shell: echo {{ ansible_eth0["ipv4"]["address"] }}

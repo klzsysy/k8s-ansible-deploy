@@ -1,0 +1,31 @@
+- hosts: cluster
+  remote_user: root
+  gather_facts: no
+  vars:
+    svc: ntpd
+  tasks:
+  - name: add sysctl args
+    shell: echo -e "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > 08-k8s.conf
+    args:
+      chdir: /etc/sysctl.d/
+      creates: 08-k8s.conf
+    notify:
+      - sysctl -p
+
+
+  - name: disable selinux
+    lineinfile:
+      dest: /etc/selinux/config
+      regexp: '^SELINUX='
+      line: 'SELINUX=disabled'
+
+  - name: disable selinux temp
+    command: setenforce 0
+    ignore_errors: true
+
+  - include: ../tasks/install-ntp.yaml
+
+  handlers:
+  - name: sysctl -p
+    shell: sysctl -p /etc/sysctl.d/08-k8s.conf 
+  - include: ../handlers/systemctl.yaml
