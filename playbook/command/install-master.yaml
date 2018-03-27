@@ -1,0 +1,156 @@
+---
+  - hosts: etcd
+    tasks:
+      - name: get etcd host info
+        debug: msg='running...' 
+
+  - hosts: masters
+    vars:
+      svc: kube-apiserver
+    tasks:
+      - include_tasks: ../tasks/master-file-copy.yaml
+
+      - name: count master cluster
+        shell: "a=0  {% for host in groups['masters'] %}
+                        a=$(expr $a + 1)
+                     {% endfor %}; echo $a"
+        register: MASTER_COUNT
+
+      - name: get etcd cluster ip
+        shell: "echo {% for host in groups['etcd'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: ETCD_IP
+
+      - name: build etcd cluster service args
+        shell: etcds=; for x in `echo {{ ETCD_IP.stdout }}`; do etcds="https://$x:2379,$etcds";done ; echo ${etcds:0:-1}
+        register: ETCD_CLUSTER_NODE_URL
+
+      - name: copy kube-apiserver service to cluster masters
+        template:
+          src: ../template/service_template/kube-apiserver.service 
+          dest: /usr/lib/systemd/system/kube-apiserver.service
+          mode: 644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+        register: APISERVER
+
+      - name: config kubectl access sep 1 build KUBE_APISERVER
+        shell: echo https://{{ lb_vip }}:6443
+        when: APISERVER.changed == true
+        register: KUBE_APISERVER
+
+      - name: check lb vip status
+        shell: ping -c 2 -W 500 {{ lb_vip }}
+        register: LB_VIP
+
+      - name: install keepalived 
+        shell: bash ../tools/ha/keepalived.sh {{ lb }} {{ LB_INTFACE }} {{ lb_vip  }} 
+        when: LB_VIP.rc != 0
+
+      - name: config kubectl access sep 2 build admin.conf
+        shell: "cd /etc/kubernetes && \
+            # set-cluster
+            kubectl config set-cluster kubernetes \
+            --certificate-authority=/etc/kubernetes/pki/ca.pem \
+            --embed-certs=true \
+            --server={{ KUBE_APISERVER.stdout }} \
+            --kubeconfig=admin.conf
+
+            # set-credentials
+            kubectl config set-credentials kubernetes-admin \
+              --client-certificate=/etc/kubernetes/pki/admin.pem \
+              --embed-certs=true \
+              --client-key=/etc/kubernetes/pki/admin-key.pem \
+              --kubeconfig=admin.conf 
+            
+            # set-context
+            kubectl config set-context kubernetes-admin@kubernetes \
+              --cluster=kubernetes \
+              --user=kubernetes-admin \
+              --kubeconfig=admin.conf
+            
+            # set default context
+            kubectl config use-context kubernetes-admin@kubernetes --kubeconfig=admin.conf
+            \cp -f /etc/kubernetes/admin.conf ~/.kube/config"
+        when: KUBE_APISERVER.changed == true
+
+      - name: config controller-manager.conf
+        shell: "cd /etc/kubernetes && \
+                # set-cluster
+                kubectl config set-cluster kubernetes \
+                  --certificate-authority=/etc/kubernetes/pki/ca.pem \
+                  --embed-certs=true \
+                  --server={{ KUBE_APISERVER.stdout }} \
+                  --kubeconfig=controller-manager.conf
+                
+                # set-credentials
+                kubectl config set-credentials system:kube-controller-manager \
+                  --client-certificate=/etc/kubernetes/pki/controller-manager.pem \
+                  --embed-certs=true \
+                  --client-key=/etc/kubernetes/pki/controller-manager-key.pem \
+                  --kubeconfig=controller-manager.conf
+                
+                # set-context
+                kubectl config set-context system:kube-controller-manager@kubernetes \
+                  --cluster=kubernetes \
+                  --user=system:kube-controller-manager \
+                  --kubeconfig=controller-manager.conf
+                
+                # set default context
+                kubectl config use-context system:kube-controller-manager@kubernetes --kubeconfig=controller-manager.conf"
+        when: KUBE_APISERVER.changed == true
+
+      - name: copy kube-controller-manager service to cluster msaters
+        template:
+          src: ../template/service_template/kube-controller-manager.service
+          dest: /usr/lib/systemd/system/kube-controller-manager.service
+          mode: 644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+
+      - name: config scheduler.conf
+        shell: "cd /etc/kubernetes && \
+                # set-cluster
+                kubectl config set-cluster kubernetes \
+                  --certificate-authority=/etc/kubernetes/pki/ca.pem \
+                  --embed-certs=true \
+                  --server={{ KUBE_APISERVER.stdout }} \
+                  --kubeconfig=scheduler.conf
+                
+                # set-credentials
+                kubectl config set-credentials system:kube-scheduler \
+                  --client-certificate=/etc/kubernetes/pki/scheduler.pem \
+                  --embed-certs=true \
+                  --client-key=/etc/kubernetes/pki/scheduler-key.pem \
+                  --kubeconfig=scheduler.conf
+                
+                # set-context
+                kubectl config set-context system:kube-scheduler@kubernetes \
+                  --cluster=kubernetes \
+                  --user=system:kube-scheduler \
+                  --kubeconfig=scheduler.conf
+                
+                # set default context
+                kubectl config use-context system:kube-scheduler@kubernetes --kubeconfig=scheduler.conf "
+        when: KUBE_APISERVER.changed == true
+
+      - name: copy kube-schedulerr service to cluster msaters
+        template:
+          src: ../template/service_template/kube-scheduler.service
+          dest: /usr/lib/systemd/system/kube-scheduler.service
+          mode: 644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+
+    handlers:
+      - include: ../handlers/systemctl.yaml

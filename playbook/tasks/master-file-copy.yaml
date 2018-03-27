@@ -143,3 +143,48 @@
       - restart svc
       - enable svc
       - debug
+
+  - name: copy certificate controller-manager-key.pem to host
+    copy:
+      src: ../generate/controller-manager-key.pem
+      dest: /etc/kubernetes/pki/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+
+  - name: copy certificate controller-manager.pem to host
+    copy:
+      src: ../generate/controller-manager.pem
+      dest: /etc/kubernetes/pki/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+  - name: copy certificate scheduler.pem to host
+    copy:
+      src: ../generate/scheduler.pem
+      dest: /etc/kubernetes/pki/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
+
+  - name: copy certificate scheduler-key.pem to host
+    copy:
+      src: ../generate/scheduler-key.pem
+      dest: /etc/kubernetes/pki/
+      mode: 0644
+    notify:
+      - reload svc
+      - restart svc
+      - enable svc
+      - debug
