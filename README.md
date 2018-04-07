@@ -31,8 +31,15 @@
 10. 配置kubectl访问apiserver
 
 
+
+
+###  开始运行
+
+`ansible-playbook -i inventory playbook/command/install-k8s-cluster.yaml -vv`
+
+
+
 ## 注意事项
 
 - `playbook/tools` 目录下`py` `sh`文件需要有可执行权限
 - 已测试的ansible版本`2.4`
-- ./v1.8.2-kubernetes/server/bin/kubectl --server=https://192.168.40.10:6443 --certificate-authority=ca.pem --client-certificate=admin.pem --client-key=admin-key.pem get cs
