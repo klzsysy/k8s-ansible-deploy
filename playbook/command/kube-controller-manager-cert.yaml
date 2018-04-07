@@ -39,28 +39,41 @@
                         {{ hostvars[host]['ansible_default_ipv4']['address'] }}
                      {% endfor %}"
         register: NODES_IP
-        when: controller_manager_json.stat.exists == false
+        # when: controller_manager_json.stat.exists == false
 
       - name: get lb node ip
         shell: "echo {% for host in groups['lb'] %}
                         {{ hostvars[host]['ansible_default_ipv4']['address'] }}
                      {% endfor %}"
         register: LB_IP
-        when: controller_manager_json.stat.exists == false
+        # when: controller_manager_json.stat.exists == false
 
-      - name: get lb info
-        shell: "echo {% for host in groups['lb_info'] %}
-                        {{ host }}
-                     {% endfor %}"
-        register: LB_INFO
-        when: controller_manager_json.stat.exists == false
+#      - name: get lb info
+#        shell: "echo {% for host in groups['lb_info'] %}
+#                        {{ host }}
+#                     {% endfor %}"
+#        register: LB_INFO
+        # when: controller_manager_json.stat.exists == false
 
       - name: create kube-controller_manager cert json
-        shell: cat ../template/json_template/controller-manager-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ LB_INFO.stdout }}  > ../generate/controller-manager-csr.json
-        when: controller_manager_json.stat.exists == false
+        shell: cat ../template/json_template/controller-manager-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate-temp/controller-manager-csr.json
+
+      - name: diff etcd-csr.json
+        shell: diff ../generate/controller-manager-csr.json ../generate-temp/controller-manager-csr.json
+        register: diff_controller_manager_csr
+        ignore_errors: yes
+    
+      - name: apply new controller-manager-csr.json
+        copy: src=../generate-temp/controller-manager-csr.json dest=../generate/controller-manager-csr.json
+        when: (controller_manager_csr.stat.exists == false) or
+          (controller_manager_pem.stat.exists == false) or
+          (controller_manager_key.stat.exists == false) or
+          (diff_controller_manager_csr.rc != 0)
+
 
       - name: create controller_manager key and cert
         shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/controller-manager-csr.json | cfssljson -bare ../generate/controller-manager
         when: (controller_manager_csr.stat.exists == false) or
           (controller_manager_pem.stat.exists == false) or
-          (controller_manager_key.stat.exists == false)
+          (controller_manager_key.stat.exists == false) or
+          (diff_controller_manager_csr.rc != 0)

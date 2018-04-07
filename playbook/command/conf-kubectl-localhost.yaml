@@ -1,0 +1,48 @@
+---
+  - hosts: localhost
+    connection: local
+    vars:
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+    tasks:
+      - name: copy kubectl to PATH
+        copy:
+          src: ../generate/{{ k8s_ver }}-kubernetes/server/bin/kubectl
+          dest: /usr/local/bin/
+          mode: 0775
+        
+
+      - name: set-cluster
+        shell: kubectl config set-cluster kubernetes --certificate-authority=../generate/ca.pem --embed-certs=true --server={{ KUBE_APISERVER }} --kubeconfig=../generate/admin.conf
+
+      - name: set-credentials
+        shell: kubectl config set-credentials kubernetes-admin --client-certificate=../generate/admin.pem  --embed-certs=true  --client-key=../generate/admin-key.pem --kubeconfig=../generate/admin.conf
+
+      - name: set-context
+        shell: kubectl config set-context kubernetes-admin@kubernetes --cluster=kubernetes --user=kubernetes-admin --kubeconfig=../generate/admin.conf
+    
+      - name: set default context
+        shell: kubectl config use-context kubernetes-admin@kubernetes --kubeconfig=../generate/admin.conf
+
+      - name: mkdir .kube
+        file: dest=~/.kube state=directory
+
+      - name: copy admin.conf to ~/.kube/
+        copy: src=../generate/admin.conf dest=~/.kube/config
+
+# ---
+#   - hosts: masters
+#     tasks:
+#       - name: mkdir .kube
+#         file: dest=~/.kube state=directory
+# 
+#       - name: copy admin.conf to master  ~/.kube
+#         copy:
+#         src: ../generate/admin.conf
+#         dest: ~/.kube
+#         mode: 0644
+# 
+#       - name: copy admin.conf to master /etc/kubernetes/
+#         copy:
+#         src: ../generate/admin.conf
+#         dest: /etc/kubernetes/
+#         mode: 0644

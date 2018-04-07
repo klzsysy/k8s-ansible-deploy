@@ -1,0 +1,18 @@
+---
+  - hosts: masters
+    tasks:
+      - name: mkdir .kube
+        file: dest=~/.kube state=directory
+
+      - name: copy admin.conf to master  ~/.kube
+        copy:
+          src: ../generate/admin.conf
+          dest: ~/.kube
+          mode: 0644
+
+      - name: copy admin.conf to master /etc/kubernetes/
+        copy:
+          src: ../generate/admin.conf
+          dest: /etc/kubernetes/
+          mode: 0644
+

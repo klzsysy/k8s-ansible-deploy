@@ -20,7 +20,7 @@
       line: 'SELINUX=disabled'
 
   - name: disable selinux temp
-    command: setenforce 0
+    command: setenforce 0 || true
     ignore_errors: true
 
   - include: ../tasks/install-ntp.yaml

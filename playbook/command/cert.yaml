@@ -5,7 +5,7 @@
     - include_tasks: ../tasks/ssl-ca.yaml
     - include_tasks: ../tasks/etcd-cert.yaml
 
-- import_playbook: apiserver-cert.yaml 
-- import_playbook: kubernetes-admin-cert.yaml 
+- import_playbook: kube-apiserver-cert.yaml 
+- import_playbook: kube-admin-cert.yaml 
 - import_playbook: kube-controller-manager-cert.yaml 
 - import_playbook: kube-scheduler-cert.yaml 

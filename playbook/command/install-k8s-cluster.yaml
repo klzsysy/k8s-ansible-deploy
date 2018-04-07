@@ -1,7 +1,4 @@
 ---
-# 安装控制机依赖
-- import_playbook: control.yaml
-
 # 修改主机名
 - import_playbook: hostname.yaml
 
@@ -10,6 +7,9 @@
 
 # 关闭防火墙
 - import_playbook: firewalld.yaml
+
+# 安装控制机依赖
+- import_playbook: control.yaml
 
 # 下载二进制文件
 - import_playbook: download_bin.yaml
@@ -23,6 +23,10 @@
 # 安装etcd
 - import_playbook: install-etcd-cluster.yaml
 
-# 安装 apiserver
-- import_playbook: install-master.yaml
+# 安装apisService
+- import_playbook: install-kube-apiserver.yaml
 
+
+# config kube admin
+- import_playbook: conf-kubectl-localhost.yaml
+- import_playbook: conf-kubectl-masters.yaml

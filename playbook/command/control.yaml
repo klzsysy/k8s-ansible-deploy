@@ -30,11 +30,9 @@
     - name: add go pkg path to PATH
       shell: bash ../template/sh_template/go_env.sh
       when: cfssl_file.rc != 0
-
-    - name: create generate folder
-      file:
-        path: ../generate
-        state: directory
+    
+    - name: mkdir ../generate-temp/
+      file: dest=../generate-temp/ state=directory
 
     - include: ../tasks/install-ntp.yaml
     - include: ../tasks/base-rpm.yaml

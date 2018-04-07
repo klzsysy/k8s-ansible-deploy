@@ -1,0 +1,78 @@
+---
+  - hosts: lb
+    tasks:
+      - name: get lb host info
+        debug: msg='running...'
+
+  - hosts: nodes
+    tasks:
+      - name: get nodes host info
+        debug: msg='running...'
+
+  - hosts: localhost
+    connection: local
+    vars:
+      svc: kube-admin
+    tasks:
+      - name: check admin csr exists or not
+        stat: 
+          path: ../generate/admin.csr
+        register: admin_csr
+    
+      - name: check admin pem exists or not
+        stat:
+          path: ../generate/admin.pem
+        register: admin_pem
+    
+      - name: check admin key exists or not
+        stat:
+          path: ../generate/admin-key.pem
+        register: admin_key
+    
+      - name: check admin cert json exists or not
+        stat:
+          path: ../generate/admin-csr.json
+        register: admin_json
+
+      - name: get masters cluster ip
+        shell: "echo {% for host in groups['nodes'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: NODES_IP
+        #when: admin_json.stat.exists == false
+
+      - name: get lb node ip
+        shell: "echo {% for host in groups['lb'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: LB_IP
+        #when: admin_json.stat.exists == false
+
+#      - name: get lb info
+#        shell: "echo {% for host in groups['lb_info'] %}
+#                        {{ host }}
+#                     {% endfor %}"
+#        register: LB_INFO
+        #when: admin_json.stat.exists == false
+
+      - name: create kube-admin cret json
+        shell: cat ../template/json_template/admin-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate-temp/admin-csr.json
+
+      - name: diff admin-csr.json
+        shell: diff ../generate/admin-csr.json ../generate-temp/admin-csr.json
+        register: diff_admin_csr
+        ignore_errors: yes
+
+      - name: apply new admin-csr.json
+        copy: src=../generate-temp/admin-csr.json dest=../generate/admin-csr.json
+        when: (admin_csr.stat.exists == false) or
+          (admin_pem.stat.exists == false) or
+          (admin_key.stat.exists == false) or
+          (diff_admin_csr.rc != 0)
+
+      - name: create admin key and cert
+        shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/admin-csr.json | cfssljson -bare ../generate/admin
+        when: (admin_csr.stat.exists == false) or
+          (admin_pem.stat.exists == false) or
+          (admin_key.stat.exists == false) or
+          (diff_admin_csr.rc != 0)

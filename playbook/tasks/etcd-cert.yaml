@@ -20,12 +20,25 @@
     register: etcd_json
 
   - name: create etcd cert json
-    shell: cat ../template/json_template/etcd-csr.json | ../tools/format_json_template.py $( ../tools/cert_host_list.sh ../../inventory) > ../generate/etcd-csr.json
-    when: etcd_json.stat.exists == false
+    shell: cat ../template/json_template/etcd-csr.json | ../tools/format_json_template.py $( ../tools/cert_host_list.sh ../../inventory) > ../generate-temp/etcd-csr.json
+    # when: etcd_json.stat.exists == false
+    #
+  - name: diff etcd-csr.json
+    shell: diff ../generate/etcd-csr.json ../generate-temp/etcd-csr.json
+    register: diff_etcd_csr
+    ignore_errors: yes
+
+  - name: apply new etcd-csr.json
+    copy: src=../generate-temp/etcd-csr.json dest=../generate/etcd-csr.json
+    when: (etcd_csr.stat.exists == false) or
+      (etcd_pem.stat.exists == false) or
+      (etcd_key.stat.exists == false) or
+      (diff_etcd_csr.rc != 0)
 
   - name: create etcd key and cert
     shell: cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/etcd-csr.json | cfssljson -bare ../generate/etcd
     when: (etcd_csr.stat.exists == false) or
       (etcd_pem.stat.exists == false) or
-      (etcd_key.stat.exists == false)
+      (etcd_key.stat.exists == false) or
+      (diff_etcd_csr.rc != 0)
     
