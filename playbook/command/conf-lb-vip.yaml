@@ -1,0 +1,78 @@
+---
+
+  - hosts: masters
+    tasks:
+      - name: get info
+        debug: msg='running...'
+
+  - hosts: lb
+    vars:
+      svc: keepalived
+    tasks:
+      - include_tasks: ../tasks/install-vip-rpm.yaml
+   
+      - name: copy check_status.sh
+        template:
+          src: ../template/ha/check_status.sh
+          dest: /etc/keepalived/
+          mode: 0755
+
+      - name: init random
+        shell: cat /dev/urandom  | head -c 2 | md5sum | tr -d [a-z] | head -c 2
+        register: VRID
+
+      - name: copy keepalived.conf
+        template:
+          src: ../template/ha/keepalived.conf
+          dest:  /etc/keepalived/
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+         #  - restart apiserver
+
+
+      # haproxy install if need
+      #
+      # if lb is in master not install , else install
+
+      - name: Check if you need to install haproxy
+        shell: systemctl stop haproxy; timeout 2 bash -c "cat < /dev/null > /dev/tcp/{{ ansible_default_ipv4.address }}/{{ apiserver_port }}" 2>/dev/null
+        register: HA
+        ignore_errors: yes
+
+      - name: build  kubernetes ip addr
+        shell: "echo {% for host in groups['masters'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                     {% endfor %}"
+        register: backend_server
+
+      - name: install haproxy
+        yum:
+          name: haproxy
+          state: present
+        when: HA.rc != 0
+        notify:
+          - restart haproxy
+          - enable haproxy
+
+      - name: build  backend kubernetes-api
+        shell: n=1; for line in {{ backend_server.stdout }}; do echo "    server  master${n} ${line}:{{ apiserver_port }} check";n=$(( n + 1)); done
+        # haproxy template use
+        register: k8s_api
+
+      - name: copy haproxy config
+        template:
+          src: ../template/ha/haproxy.cfg
+          dest: /etc/haproxy/
+          mode: 0644
+        when: HA.rc != 0
+        notify:
+          - restart haproxy 
+          - enable haproxy
+
+    handlers:
+      - include: ../handlers/systemctl.yaml
+

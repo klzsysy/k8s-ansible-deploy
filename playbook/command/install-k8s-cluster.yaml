@@ -26,6 +26,7 @@
 # 安装apisService
 - import_playbook: install-kube-apiserver.yaml
 
+- import_playbook: conf-lb-vip.yaml
 
 # config kube admin
 - import_playbook: conf-kubectl-localhost.yaml

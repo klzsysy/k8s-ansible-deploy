@@ -9,7 +9,6 @@ ExecStart=/usr/local/bin/kube-apiserver \
 	    --logtostderr=true \
 	    --v=0 \
 	    --advertise-address={{ ansible_default_ipv4.address }} \
-	    --bind-address={{ ansible_default_ipv4.address }} \
 	    --secure-port=6443 \
 	    --insecure-port=0 \
 	    --allow-privileged=true \

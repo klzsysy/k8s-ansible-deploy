@@ -32,7 +32,11 @@
       when: cfssl_file.rc != 0
     
     - name: mkdir ../generate-temp/
-      file: dest=../generate-temp/ state=directory
+      file: path=../generate-temp/ state=directory
+    
+    - name: chmod a+x tools/*.sh
+      file: dest=../tools/ mode=0755  recurse=yes
+
 
     - include: ../tasks/install-ntp.yaml
     - include: ../tasks/base-rpm.yaml

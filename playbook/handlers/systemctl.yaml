@@ -24,3 +24,18 @@
     service:
       name: "{{ svc }}"
       state: stopped
+ 
+  - name: restart apiserver
+    service:
+      name: kube-apiserver
+      state: restarted
+
+  - name: restart haproxy
+    service:
+      name: haproxy
+      state: restarted
+
+  - name: enable haproxy
+    service:
+      name: haproxy
+      enabled: yes

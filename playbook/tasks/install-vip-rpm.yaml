@@ -1,0 +1,7 @@
+---
+   - name: install ipsec
+     yum: name=ipset state=present
+
+   - name: install keepalived
+     yum: name=keepalived  state=present
+
