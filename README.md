@@ -11,7 +11,7 @@
 | 2    | 系统参数     | system_base.yaml | cluster   | 配置转发参数、关闭selinux、安装ntp |
 | 3    | 防火墙       | firewalld.yaml   | cluster   | 关闭防火墙                         |
 | 4    | 控制机器依赖 | control.yaml     | localhost | 安装`go` `cfssl` `ntp`             |
-|      |              |                  |           |                                    |
+| 5    |  ...         |  ...             |           |                                    |
 
 
 ### 当前进度
@@ -29,13 +29,14 @@
 7. 创建证书 `cert.yaml`
 8. 安装etcd `install-etcd-cluster.yaml`
 9. 安装 apiservice `install-kube-apiserver`
-10. 配置kubectl访问apiserver
+10. 配置高可用虚拟ip `conf-lb-vip.yaml`
+11. 配置kubectl访问apiserver
 
 
 ## 必要准备
 
 - 至少准备三个以上节点，并且能相互正确解析主机名
-- 一个虚拟ip，作为apiserver高可用ip，可以是硬件负载器提供，也可以是由两台以上机器通过keepalived + haproxy提供
+- 一个虚拟ip，作为apiserver高可用ip，可以是硬件负载器提供，也可以是由两台以上机器，自动安装keepalived + haproxy
 
 ###  开始运行
 
