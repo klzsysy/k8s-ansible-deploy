@@ -29,5 +29,4 @@
 - import_playbook: conf-lb-vip.yaml
 
 # config kube admin
-- import_playbook: conf-kubectl-localhost.yaml
-- import_playbook: conf-kubectl-masters.yaml
+- import_playbook: conf-kube-kubectl.conf

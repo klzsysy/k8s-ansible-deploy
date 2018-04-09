@@ -28,9 +28,9 @@
 6. 安装 docker `install_docker.yaml`
 7. 创建证书 `cert.yaml`
 8. 安装etcd `install-etcd-cluster.yaml`
-9. 安装 apiservice `install-kube-apiserver`
+9. 安装 kube-apiserver `install-kube-apiserver.yaml`
 10. 配置高可用虚拟ip `conf-lb-vip.yaml`
-11. 配置kubectl访问apiserver
+11. 配置kubectl访问apiserver `conf-kube-kubectl.conf`
 
 
 ## 必要准备
