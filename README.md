@@ -31,7 +31,9 @@
 9. 安装 kube-apiserver `install-kube-apiserver.yaml`
 10. 配置高可用虚拟ip `conf-lb-vip.yaml`
 11. 配置kubectl访问apiserver `conf-kube-kubectl.yaml`
-
+12. 配置kube-controller-manager
+13. 配置kube-scheduler
+14. kubelet未完成，未配置kubelet.conf和service
 
 ## 必要准备
 
