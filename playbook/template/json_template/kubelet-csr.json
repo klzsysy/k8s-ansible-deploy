@@ -1,0 +1,18 @@
+{
+  "CN": "system:node:{{ inventory_hostname }}",
+  "hosts": [
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "ST": "GuangDong",
+      "L": "ShenZhen",
+      "O": "system:nodes",
+      "OU": "k8snative"
+    }
+  ]
+}

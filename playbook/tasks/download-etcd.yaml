@@ -18,7 +18,7 @@
     when: (etcd_dir.stat.exists == false) and (etcd_tar.stat.exists == true)
 
   - name: download etcd bin file
-    shell: cd ../generate && wget {{ etcd_url }}/{{ etcd_ver }}/etcd-{{ etcd_ver }}-linux-amd64.tar.gz  && tar -xzvf etcd-{{ etcd_ver }}-linux-amd64.tar.gz
+    shell: cd ../generate && wget {{ etcd_url }}/download/{{ etcd_ver }}/etcd-{{ etcd_ver }}-linux-amd64.tar.gz  && tar -xzvf etcd-{{ etcd_ver }}-linux-amd64.tar.gz
     when: (etcd_tar.stat.exists == false) and (etcd_dir.stat.exists == false)
     register: down_stat
 

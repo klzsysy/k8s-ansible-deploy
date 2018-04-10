@@ -1,0 +1,56 @@
+---
+  - hosts: localhost
+    connection: local
+    tasks:
+      - include_tasks: ../tasks/download-node-rpm-depend.yaml
+
+  - hosts: nodes
+    tasks:
+      - include_tasks: ../tasks/install-node-rpm-depend.yaml
+
+      - name: mkdir cni
+        file:
+          name: /usr/local/bin/cni/
+          state: directory
+
+      - name: copy cni to node
+        copy:
+          src: "{{ item }}"
+          dest: /usr/local/bin/cni/
+          mode: 0775
+
+        with_items:
+          - ../generate/cni-amd64-{{ cni_ver }}/
+          - ../generate/cni-plugins-amd64-{{ cni_plugins_ver }}/
+
+
+      - name: copy kube-proxy and kubelet
+        copy:
+          src: ../generate/{{ k8s_ver }}-kubernetes/server/bin/{{ item }}
+          dest: /usr/local/bin
+          mode: 0775
+        with_items:
+          - kubelet
+          - kube-proxy
+      
+      - name: create kubelet-csr.json
+        template:
+          src: ../template/json_template/kubelet-csr.json
+          dest: /tmp/
+        register: build_kubelet_csr
+
+      - name: get kubelet-csr.json from node...
+        fetch:
+          flat: yes
+          src: /tmp/kubelet-csr.json
+          dest: ../generate/kubelet-csr-{{ inventory_hostname }}.json
+
+
+  - hosts: localhost
+    connection: local
+    tasks:
+      - name: create kubelet cert 
+        shell: "{% for host in groups['nodes'] %}
+                        if [ ! -f ../generate/kubelet-{{ host }}.csr ];then cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/kubelet-csr-{{ host }}.json | cfssljson -bare ../generate/kubelet-{{ host }}; else true; fi;
+                {% endfor %}"
+

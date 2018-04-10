@@ -1,0 +1,10 @@
+---
+  - name: check rpm package
+    stat:
+      path: ../generate/node-depend-rpm.tar.gz
+    register: node_depend_rpm
+
+  - name: download rpm
+    shell: yum install -y ebtables socat util-linux conntrack-tools --downloadonly --downloaddir=../generate-temp/ && tar -czf ../generate/node-depend-rpm.tar.gz ../generate-temp/*.rpm
+    when: node_depend_rpm.stat.exists == false
+    ignore_errors: true

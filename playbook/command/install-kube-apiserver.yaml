@@ -8,7 +8,7 @@
     vars:
       svc: kube-apiserver
     tasks:
-      - include_tasks: ../tasks/apiserver-file-copy.yaml
+      - include_tasks: ../tasks/kube-file-copy.yaml
 #        notify:
 #          - restart svc
 #          - enable svc
@@ -40,6 +40,7 @@
           - restart svc
           - enable svc
           - debug
+          - status
 
     handlers:
       - include: ../handlers/systemctl.yaml

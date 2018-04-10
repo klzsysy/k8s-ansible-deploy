@@ -9,7 +9,7 @@ cert_host
 ntp_server=1.cn.pool.ntp.org
 # etcd info
 etcd_ver=v3.2.9
-etcd_url=https://github.com/coreos/etcd/releases/download
+etcd_url=https://github.com/coreos/etcd/releases
 
 # kubernetes
 # https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.8.md 
@@ -20,17 +20,19 @@ k8s_file=kubernetes-server-linux-amd64.tar.gz
 
 # cni
 cni_ver=v0.6.0
-cni_url=https://github.com/containernetworking/cni/releases/download
+cni_url=https://github.com/containernetworking/cni/releases
 
 # cni plugins
 cni_plugins_ver=v0.6.0
-cni_plugins_url=https://github.com/containernetworking/plugins/releases/download
+cni_plugins_url=https://github.com/containernetworking/plugins/releases
 
 # docker
 docker_storage=/dev/sdb
 
-# kube api
+# svc addr range
 service_cluster_ip_range="10.96.0.0/12"
+# pod addr range
+pod_cluster_cidr="10.244.0.0/16"
 
 # KUBE_APISERVER lb ip
 ha_api_ip=192.168.40.8

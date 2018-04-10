@@ -1,0 +1,51 @@
+---
+  - hosts: localhost
+    connection: local
+    vars:
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+
+    tasks:
+      - name: set-cluster
+        shell: kubectl config set-cluster kubernetes --certificate-authority=../generate/ca.pem --embed-certs=true --server={{ KUBE_APISERVER }} --kubeconfig=../generate/scheduler.conf
+        
+      - name: set-credentials
+        shell: kubectl config set-credentials system:kube-scheduler --client-certificate=../generate/scheduler.pem --embed-certs=true --client-key=../generate/scheduler-key.pem --kubeconfig=../generate/scheduler.conf
+
+      - name: set-context
+        shell: kubectl config set-context system:kube-scheduler@kubernetes --cluster=kubernetes --user=system:kube-scheduler --kubeconfig=../generate/scheduler.conf
+
+      - name: set default context
+        shell: kubectl config use-context system:kube-scheduler@kubernetes --kubeconfig=../generate/scheduler.conf
+
+
+  - hosts: masters
+    vars: 
+      svc: kube-scheduler
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+    tasks:
+      - name: copy scheduler.conf
+        copy:
+          src: ../generate/scheduler.conf
+          dest: /etc/kubernetes/
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+
+      - name: copy scheduler.conf service to cluster master
+        template:
+          src: ../template/service_template/kube-scheduler.service
+          dest: /usr/lib/systemd/system/kube-scheduler.service
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+
+    handlers:
+      - include: ../handlers/systemctl.yaml

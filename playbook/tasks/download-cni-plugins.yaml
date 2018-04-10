@@ -24,7 +24,7 @@
     when: (cni_plugins_dir.stat.exists == false) and (cni_plugins_tar.stat.exists == true)
 
   - name: download cni-plugins bin file
-    shell: cd ../generate && wget {{ cni_plugins_url }}/{{ cni_plugins_ver }}/cni-plugins-amd64-{{ cni_plugins_ver }}.tgz  && mkdir -p cni-plugins-amd64-{{ cni_plugins_ver }} && tar -xzvf cni-plugins-amd64-{{ cni_plugins_ver }}.tgz -C cni-plugins-amd64-{{ cni_plugins_ver }}
+    shell: cd ../generate && wget {{ cni_plugins_url }}/download/{{ cni_plugins_ver }}/cni-plugins-amd64-{{ cni_plugins_ver }}.tgz  && mkdir -p cni-plugins-amd64-{{ cni_plugins_ver }} && tar -xzvf cni-plugins-amd64-{{ cni_plugins_ver }}.tgz -C cni-plugins-amd64-{{ cni_plugins_ver }}
     when: (cni_plugins_tar.stat.exists == false) and (cni_plugins_dir.stat.exists == false)
     register: down_stat
 

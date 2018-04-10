@@ -1,0 +1,40 @@
+---
+  - name: copy node-depend-rpm to node
+    copy:
+      src: ../generate/node-depend-rpm.tar.gz
+      dest: /tmp/
+    ignore_errors: true
+
+  - name: check rpm package
+    stat:
+      path: /tmp/node-depend-rpm.tar.gz
+    register: node_depend_rpm
+
+  - name: makdir rpm temp
+    file:
+      name: /tmp/node-depend-rpm/
+      state: directory
+  
+  - name: unzip node-depend_rpm.tar.gz
+    unarchive:
+      src: /tmp/node-depend-rpm.tar.gz
+      dest: /tmp/node-depend-rpm/
+    register: unzip_stat
+    when: node_depend_rpm.stat.exists == true
+
+  - name: install node depend rpm for offline
+    yum:
+      name: "{{ item }}"
+      state: present
+    when: unzip_stat.failed == false
+    with_fileglob:
+      - /tmp/node-depend-rpm/generate-temp/*.rpm
+
+  - name: install node depend rpm online
+    yum:  name={{ item }} state=present
+    with_items:
+      - ebtables
+      - socat
+      - util-linux
+      - conntrack-tools
+    when: node_depend_rpm.stat.exists == false

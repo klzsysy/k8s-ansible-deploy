@@ -39,3 +39,6 @@
     service:
       name: haproxy
       enabled: yes
+ 
+  - name: status
+    shell: systemctl status {{ svc }}

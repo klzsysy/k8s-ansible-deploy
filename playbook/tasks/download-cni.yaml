@@ -18,7 +18,7 @@
     when: (cni_dir.stat.exists == false) and (cni_tar.stat.exists == true)
 
   - name: download cni bin file
-    shell: cd ../generate && wget {{ cni_url }}/{{ cni_ver }}/cni-amd64-{{ cni_ver }}.tgz  && mkdir -p cni-amd64-{{ cni_ver }} && tar -xzvf cni-amd64-{{ cni_ver }}.tgz -C cni-amd64-{{ cni_ver }}
+    shell: cd ../generate && wget {{ cni_url }}/download/{{ cni_ver }}/cni-amd64-{{ cni_ver }}.tgz  && mkdir -p cni-amd64-{{ cni_ver }} && tar -xzvf cni-amd64-{{ cni_ver }}.tgz -C cni-amd64-{{ cni_ver }}
     when: (cni_tar.stat.exists == false) and (cni_dir.stat.exists == false)
     register: down_stat
 

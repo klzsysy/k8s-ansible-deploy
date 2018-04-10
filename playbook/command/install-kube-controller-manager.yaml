@@ -1,0 +1,51 @@
+---
+  - hosts: localhost
+    connection: local
+    vars:
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+
+    tasks:
+      - name: set-cluster
+        shell: kubectl config set-cluster kubernetes --certificate-authority=../generate/ca.pem --embed-certs=true --server={{ KUBE_APISERVER }} --kubeconfig=../generate/controller-manager.conf
+        
+      - name: set-credentials
+        shell: kubectl config set-credentials system:kube-controller-manager --client-certificate=../generate/controller-manager.pem --embed-certs=true --client-key=../generate/controller-manager-key.pem --kubeconfig=../generate/controller-manager.conf
+
+      - name: set-context
+        shell: kubectl config set-context system:kube-controller-manager@kubernetes --cluster=kubernetes --user=system:kube-controller-manager --kubeconfig=../generate/controller-manager.conf
+
+      - name: set default context
+        shell: kubectl config use-context system:kube-controller-manager@kubernetes --kubeconfig=../generate/controller-manager.conf
+
+
+  - hosts: masters
+    vars: 
+      svc: kube-controller-manager
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+    tasks:
+      - name: copy controller-manager.conf
+        copy:
+          src: ../generate/controller-manager.conf
+          dest: /etc/kubernetes/
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+
+      - name: copy kube-controller-manager service to cluster master
+        template:
+          src: ../template/service_template/kube-controller-manager.service
+          dest: /usr/lib/systemd/system/kube-controller-manager.service
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+
+    handlers:
+      - include: ../handlers/systemctl.yaml
