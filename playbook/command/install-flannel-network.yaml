@@ -29,6 +29,13 @@
         template:
           src: ../template/yml_template/kube-flannel.yml
           dest: ../generate/kube-flannel.yml
+        register: kube_flannel
+
+      - name: try delete lod flannel conf
+        shell: kubectl delete -f ../generate/kube-flannel.yml
+        when: kube_flannel.changed == true
+        ignore_errors: true
 
       - name: import flannel network plugin
         shell: kubectl create -f ../generate/kube-flannel.yml
+        when: kube_flannel.changed == true

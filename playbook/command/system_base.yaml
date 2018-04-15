@@ -4,14 +4,19 @@
   vars:
     svc: ntpd
   tasks:
-  - name: add sysctl args
-    shell: echo -e "net.bridge.bridge-nf-call-ip6tables = 1\nnet.bridge.bridge-nf-call-iptables = 1" > 08-k8s.conf
-    args:
-      chdir: /etc/sysctl.d/
-      creates: 08-k8s.conf
+  - name: set sysctl option
+    lineinfile:
+      path: /etc/sysctl.d/08-k8s.conf
+      create: yes
+      state: present
+      mode: 644
+      line: "{{ item }}"
+    with_items:
+      - net.bridge.bridge-nf-call-ip6tables = 1
+      - net.bridge.bridge-nf-call-iptables = 1
+      - net.ipv4.ip_forward = 1
     notify:
       - sysctl -p
-
 
   - name: disable selinux
     lineinfile:
@@ -20,7 +25,7 @@
       line: 'SELINUX=disabled'
 
   - name: disable selinux temp
-    command: setenforce 0 || true
+    shell: setenforce 0 || true
     ignore_errors: true
 
   - name: disable swap

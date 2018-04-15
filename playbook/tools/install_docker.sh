@@ -53,13 +53,6 @@ docker_config(){
 EOF
 
 
-    sed -i '/net.bridge.bridge-nf-call-iptables/d' /etc/sysctl.conf
-    sed -i '/net.bridge.bridge-nf-call-ip6tables/d' /etc/sysctl.conf
-    cat >>/etc/sysctl.conf <<EOF
-net.bridge.bridge-nf-call-iptables=1
-net.bridge.bridge-nf-call-ip6tables=1
-EOF
-    sysctl -p
 
 # ---------------
     if [ ! -f /etc/sysconfig/docker ];then
