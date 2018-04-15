@@ -34,5 +34,8 @@
 # config nodes
 - import_playbook: install-kube-node.yaml
 
+# install flannel 
+- import_playbook: install-flannel-network.yaml
+
 # install dns
 - import_playbook: install-kube-dns.yaml

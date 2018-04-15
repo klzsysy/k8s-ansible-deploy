@@ -23,7 +23,8 @@
 12. 配置kube-controller-manager `install-kube-controller-manager.yaml`
 13. 配置kube-scheduler `install-kube-scheduler.yaml`
 14. 配置kubelet kube-proxy `install-kube-node.yaml`
-15. 配置kube-dns `install-kube-dns.yaml`
+15. 配置flannel网络插件 `install-flannel-network.yaml`
+16. 配置kube-dns `install-kube-dns.yaml`
 
 
 ## 必要准备
