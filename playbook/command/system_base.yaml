@@ -15,13 +15,23 @@
 
   - name: disable selinux
     lineinfile:
-      dest: /etc/selinux/config
+      path: /etc/selinux/config
       regexp: '^SELINUX='
       line: 'SELINUX=disabled'
 
   - name: disable selinux temp
     command: setenforce 0 || true
     ignore_errors: true
+
+  - name: disable swap
+    shell: swapoff -a
+
+  - name: disable swap fstab
+    lineinfile:
+      path: /etc/fstab
+      regexp: '^([^#]*)swap(.*)$'
+      line: '# \1swap\2'
+      backrefs: yes
 
   - include: ../tasks/install-ntp.yaml
 
