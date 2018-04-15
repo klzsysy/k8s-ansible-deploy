@@ -37,10 +37,11 @@
 
 `ansible-playbook -i inventory playbook/command/install-k8s-cluster.yaml -vv`
 
-> 也可以单独运行流程中单个的playbook
+> 也可以单独运行流程中的单个playbook
 
 ## 注意事项
 - 已测试的ansible版本`2.4`
+- inventory文件的变量不可缺失，因为没有单独设定默认值
 
 ## issue
 - 每次运行均会重启docker
