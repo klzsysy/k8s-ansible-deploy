@@ -1,0 +1,34 @@
+---
+  - hosts: etcd
+    tasks:
+      - name: get etcd host info
+        debug: msg='running...'
+
+
+  - hosts: localhost
+    connection: local
+    tasks:
+      - name: create flannel cert
+        shell: kubectl create secret generic etcd-tls-secret  --from-file=../generate/etcd.pem --from-file=../generate/etcd-key.pem  --from-file=../generate/ca.pem -n kube-system
+        ignore_errors: true
+
+      - name: get etcd cluster ip
+        shell: "echo {% for host in groups['etcd'] %}
+                        {{ hostvars[host]['ansible_default_ipv4']['address'] }}
+                      {% endfor %}"
+        register: ETCD_IP
+
+      - name: build etcd cluster service args
+        shell: etcds=; for x in `echo {{ ETCD_IP.stdout }}`; do etcds="https://$x:2379,$etcds";done ; echo ${etcds:0:-1}
+        register: ETCD_CLUSTER_NODE_URL
+
+
+
+      # https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      - name: build kube-flannel.yml
+        template:
+          src: ../template/yml_template/kube-flannel.yml
+          dest: ../generate/kube-flannel.yml
+
+      - name: import flannel network plugin
+        shell: kubectl create -f ../generate/kube-flannel.yml

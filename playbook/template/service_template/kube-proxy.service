@@ -1,0 +1,18 @@
+[Unit]
+Description=kube-proxy
+After=network.target
+
+[Service]
+WorkingDirectory=/var/lib/kube-proxy
+EnvironmentFile=-/etc/kubernetes/kube-proxy
+ExecStart=/usr/local/bin/kube-proxy \
+        --bind-address={{ ansible_default_ipv4.address }} \
+        --logtostderr=true \
+        --v=0 \
+        --kubeconfig=/etc/kubernetes/kube-proxy.conf \
+        --cluster-cidr={{ pod_cluster_cidr }}
+        
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

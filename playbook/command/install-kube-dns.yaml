@@ -1,0 +1,38 @@
+  - hosts: localhost
+    connection: local
+    tasks:
+      - name: import /kubedns-cm and kubedns-sa
+        shell: kubectl create -f ../template/yml_template/kubedns-cm.yaml ; kubectl create -f  ../template/yml_template/kubedns-sa.yaml
+        ignore_errors: true
+
+      - name: build kubedns-controller.yaml
+        template:
+          src: ../template/yml_template/kubedns-controller.yaml.base
+          dest: ../generate/kubedns-controller.yaml
+        register: controller
+
+      - name: build kubedns-svc.yaml
+        template:
+          src: ../template/yml_template/kubedns-svc.yaml.base
+          dest: ../generate/kubedns-svc.yaml
+        register: kubedns_svc
+
+      - name: remove lod  kubedns-svc
+        shell: kubectl delete -f ../generate/kubedns-svc.yaml
+        when: kubedns_svc.changed == true
+        ignore_errors: true
+
+      - name: remove lod  kubedns-controller
+        shell: kubectl delete -f ../generate/kubedns-controller.yaml
+        when: controller.changed == true
+        ignore_errors: true
+      
+      - name: import kubedns-svc and kubedns-controller
+        shell: kubectl create -f ../generate/kubedns-controller.yaml ;  kubectl create -f ../generate/kubedns-svc.yaml
+        ignore_errors: true
+        register: import_dns
+        when: kubedns_svc.changed == true or controller.changed == true
+
+      - name: scale kubedns replicas
+        shell: kubectl --namespace=kube-system scale deployment kube-dns --replicas=2
+        when: import_dns.skipped == false

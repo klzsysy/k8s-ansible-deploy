@@ -35,7 +35,7 @@
           - debug
           - status
 
-      - name: copy scheduler.conf service to cluster master
+      - name: copy scheduler service to cluster master
         template:
           src: ../template/service_template/kube-scheduler.service
           dest: /usr/lib/systemd/system/kube-scheduler.service

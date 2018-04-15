@@ -30,3 +30,9 @@
 
 # config kube admin
 - import_playbook: conf-kube-kubectl.yaml
+
+# config nodes
+- import_playbook: install-kube-node.yaml
+
+# install dns
+- import_playbook: install-kube-dns.yaml

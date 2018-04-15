@@ -1,56 +1,175 @@
 ---
+#  - hosts: localhost
+#    connection: local
+#    tasks:
+#      - include_tasks: ../tasks/download-node-rpm-depend.yaml
+#
+#  - hosts: nodes
+#    tasks:
+#      - include_tasks: ../tasks/install-node-rpm-depend.yaml
+#
+#      - name: mkdir cni
+#        file:
+#          name: /usr/local/bin/cni/
+#          state: directory
+#
+#      - name: copy cni to node
+#        copy:
+#          src: "{{ item }}"
+#          dest: /usr/local/bin/cni/
+#          mode: 0775
+#
+#        with_items:
+#          - ../generate/cni-amd64-{{ cni_ver }}/
+#          - ../generate/cni-plugins-amd64-{{ cni_plugins_ver }}/
+#
+#
+#      - name: copy kube-proxy and kubelet
+#        copy:
+#          src: ../generate/{{ k8s_ver }}-kubernetes/server/bin/{{ item }}
+#          dest: /usr/local/bin
+#          mode: 0775
+#        with_items:
+#          - kubelet
+#          - kube-proxy
+#      
+#      - name: create kubelet-csr.json
+#        template:
+#          src: ../template/json_template/kubelet-csr.json
+#          dest: /tmp/
+#        register: build_kubelet_csr
+#
+#      - name: get kubelet-csr.json from node...
+#        fetch:
+#          flat: yes
+#          src: /tmp/kubelet-csr.json
+#          dest: ../generate/kubelet-csr-{{ inventory_hostname }}.json
+
   - hosts: localhost
     connection: local
-    tasks:
-      - include_tasks: ../tasks/download-node-rpm-depend.yaml
-
-  - hosts: nodes
-    tasks:
-      - include_tasks: ../tasks/install-node-rpm-depend.yaml
-
-      - name: mkdir cni
-        file:
-          name: /usr/local/bin/cni/
-          state: directory
-
-      - name: copy cni to node
-        copy:
-          src: "{{ item }}"
-          dest: /usr/local/bin/cni/
-          mode: 0775
-
-        with_items:
-          - ../generate/cni-amd64-{{ cni_ver }}/
-          - ../generate/cni-plugins-amd64-{{ cni_plugins_ver }}/
-
-
-      - name: copy kube-proxy and kubelet
-        copy:
-          src: ../generate/{{ k8s_ver }}-kubernetes/server/bin/{{ item }}
-          dest: /usr/local/bin
-          mode: 0775
-        with_items:
-          - kubelet
-          - kube-proxy
-      
-      - name: create kubelet-csr.json
-        template:
-          src: ../template/json_template/kubelet-csr.json
-          dest: /tmp/
-        register: build_kubelet_csr
-
-      - name: get kubelet-csr.json from node...
-        fetch:
-          flat: yes
-          src: /tmp/kubelet-csr.json
-          dest: ../generate/kubelet-csr-{{ inventory_hostname }}.json
-
-
-  - hosts: localhost
-    connection: local
+    vars: 
+      svc: kubelet
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
     tasks:
       - name: create kubelet cert 
         shell: "{% for host in groups['nodes'] %}
-                        if [ ! -f ../generate/kubelet-{{ host }}.csr ];then cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/kubelet-csr-{{ host }}.json | cfssljson -bare ../generate/kubelet-{{ host }}; else true; fi;
+                  if [ ! -f ../generate/kubelet-{{ host }}.csr ];then cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/kubelet-csr-{{ host }}.json | cfssljson -bare ../generate/kubelet-{{ host }};fi;
                 {% endfor %}"
 
+      - name: create nodes kubelet.conf
+        shell: "{% for host in groups['nodes'] %}
+                  if [ ! -f ../generate/kubelet-{{ host }}.conf ];then
+                    kubectl config set-cluster kubernetes --certificate-authority=../generate/ca.pem --embed-certs=true --server={{ KUBE_APISERVER }} --kubeconfig=../generate/kubelet-{{ host }}.conf;
+                    kubectl config set-credentials system:node:{{ host }} --client-certificate=../generate/kubelet-{{ host }}.pem --embed-certs=true --client-key=../generate/kubelet-{{ host }}-key.pem --kubeconfig=../generate/kubelet-{{ host }}.conf;
+                    kubectl config set-context system:node:{{ host }}@kubernetes --cluster=kubernetes --user=system:node:{{ host }} --kubeconfig=../generate/kubelet-{{ host }}.conf;
+                    kubectl config use-context system:node:{{ host }}@kubernetes --kubeconfig=../generate/kubelet-{{ host }}.conf;
+                  fi;
+                {% endfor %}"
+
+
+      - name: create kube-proxy cert
+        shell: cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../template/json_template/kube-proxy-csr.json | cfssljson -bare ../generate/kube-proxy
+
+      - name: create nodes kube-proxy.conf
+        shell: "if [ ! -f ../generate/kube-proxy.conf ];then
+                    kubectl config set-cluster kubernetes --certificate-authority=../generate/ca.pem --embed-certs=true --server={{ KUBE_APISERVER }} --kubeconfig=../generate/kube-proxy.conf;
+                    kubectl config set-credentials system:kube-proxy --client-certificate=../generate/kube-proxy.pem --embed-certs=true --client-key=../generate/kube-proxy-key.pem --kubeconfig=../generate/kube-proxy.conf;
+                    kubectl config set-context system:kube-proxy@kubernetes --cluster=kubernetes --user=system:kube-proxy --kubeconfig=../generate/kube-proxy.conf;
+                    kubectl config use-context system:kube-proxy@kubernetes --kubeconfig=../generate/kube-proxy.conf;
+                fi"
+
+  - hosts: nodes
+    vars: 
+      svc: kubelet
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+    tasks:
+
+      # ------------------------------------
+      - name: mkdir kubelet workdir
+        file:
+          name: "{{ item }}"
+          state: directory
+        with_items:
+          - /var/lib/kubelet
+          - /etc/cni/net.d
+          - /etc/kubernetes/manifests
+
+      - name: copy kubelet.conf
+        copy:
+          src: ../generate/kubelet-{{ inventory_hostname }}.conf
+          dest: /etc/kubernetes/kubelet.conf
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+
+      - name: copy kubelet service to nodes
+        template:
+          src: ../template/service_template/kubelet.service
+          dest: /usr/lib/systemd/system/kubelet.service
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+        register: kubelet_status
+
+      - name: start {{ svc }}
+        service:
+          name: "{{ svc }}"
+          state: started
+        when: kubelet_status.changed == false
+
+
+    handlers:
+      - include: ../handlers/systemctl.yaml
+
+      # --------------------------------------
+  - hosts: nodes
+    vars: 
+      svc: kube-proxy
+      KUBE_APISERVER: https://{{ ha_api_ip }}:{{ apiserver_port }}
+    tasks:
+      - name: mkdir kube-proxy workdir
+        file:
+          name: /var/lib/kube-proxy
+          state: directory
+
+      - name: copy kube-proxy.conf
+        copy:
+          src: ../generate/kube-proxy.conf
+          dest: /etc/kubernetes/
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+
+      - name: copy kube-proxy service to nodes
+        template:
+          src: ../template/service_template/kube-proxy.service
+          dest: /usr/lib/systemd/system/kube-proxy.service
+          mode: 0644
+        notify:
+          - reload svc
+          - restart svc
+          - enable svc
+          - debug
+          - status
+        register: kube_proxy_status
+
+      - name: start {{ svc }}
+        service:
+          name: "{{ svc }}"
+          state: started
+        when: kube_proxy_status.changed == false
+
+    handlers:
+      - include: ../handlers/systemctl.yaml
