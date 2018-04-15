@@ -40,6 +40,9 @@ ha_api_ip=192.168.40.8
 # apiserver port
 apiserver_port=6443
 
+cluster_dns=10.96.0.10
+dns_domain=cluster.local
+
 
 # ---------------------------
 # 证书签发范围
