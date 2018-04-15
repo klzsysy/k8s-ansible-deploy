@@ -1,7 +1,6 @@
 [hosts:children]
 cluster
 control
-lb_info
 cert_host
 
 # --------------------------
@@ -48,7 +47,6 @@ dns_domain=cluster.local
 # 证书签发范围
 [cert_host:children]
 cluster
-lb_info
 
 # 集群范围
 [cluster:children]
@@ -72,7 +70,3 @@ k8s-master0[1:3].ifaii.io
 [lb]
 k8s-master0[1:2].ifaii.io
 
-[lb_info]
-# k8s-ha.ifaii.io
-# 负载均衡虚拟IP
-# 192.168.40.8
