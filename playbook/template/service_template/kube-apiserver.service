@@ -6,6 +6,7 @@ After=etcd.service
 [Service]
 EnvironmentFile=-/etc/kubernetes/apiserver
 ExecStart=/usr/local/bin/kube-apiserver \
+            --bind-address=0.0.0.0 \
 	    --logtostderr=true \
 	    --v=0 \
 	    --advertise-address={{ ansible_default_ipv4.address }} \
@@ -25,8 +26,8 @@ ExecStart=/usr/local/bin/kube-apiserver \
 	    --experimental-bootstrap-token-auth=true \
 	    --apiserver-count={{ MASTER_COUNT.stdout }} \
 	    --enable-swagger-ui=true \
-	    --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds \
-	    --authorization-mode=RBAC \
+	    --admission-control=Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota \
+	    --authorization-mode=Node,RBAC \
 	    --audit-log-maxage=30 \
 	    --audit-log-maxbackup=3 \
 	    --audit-log-maxsize=100 \
@@ -34,6 +35,7 @@ ExecStart=/usr/local/bin/kube-apiserver \
 Restart=on-failure
 Type=notify
 LimitNOFILE=65536
+# --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds \
 
 [Install]
 WantedBy=multi-user.target
