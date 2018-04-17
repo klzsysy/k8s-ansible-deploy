@@ -39,3 +39,7 @@
 
 # install dns
 - import_playbook: install-kube-dns.yaml
+
+# install dashborad and kong
+- import_playbook: deploy-kubernetes-dashboard.yaml
+- import_playbook: deploy-kong-api-gateway.yaml

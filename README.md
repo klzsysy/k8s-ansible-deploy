@@ -1,6 +1,6 @@
 # Ansible Install k8s
 
-施工基本完成，待完善...
+使用ansible部署基于二进制安装的kubernetes集群
 
 
 ### 安装流程
@@ -25,6 +25,7 @@
 14. 配置kubelet kube-proxy `install-kube-node.yaml`
 15. 配置flannel网络插件 `install-flannel-network.yaml`
 16. 配置kube-dns `install-kube-dns.yaml`
+17. 部署k8s dashboard和Kong Api Gateway
 
 
 ## 必要准备
