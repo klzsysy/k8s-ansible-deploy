@@ -1,0 +1,42 @@
+---
+  - hosts: localhost
+    connection: local
+    gather_facts: no
+    tasks:
+      - name: try import cassandra
+        shell: kubectl create -f ../template/yml_template/kong/cassandra.yaml
+        ignore_errors: true
+        register: cassandra
+
+      - name: cassandra info
+        debug:
+          msg: cassandra Already exist, reinstall please delete the current
+        when: cassandra.rc != 0 
+
+      - name: wait cassandra ready
+        shell: n=10; while [ $n -ge  0 ]; do kubectl -n default  get pod cassandra-0 | grep 1/1 && exit 0; n=$(( n - 1 ));  sleep 10; done; exit 1
+
+      - name: import kong-migration job
+        shell: kubectl delete job kong-migration ; kubectl create -f ../template/yml_template/kong/kong_migration_cassandra.yaml
+        when: cassandra.rc == 0
+
+      - name: wait kong-migration ready
+        shell: sleep 5; n=10; while [ $n -ge  0 ];do if [ $(kubectl get job -n default kong-migration | awk 'NR==2 {print $3}') -eq 1 ] ;then exit 0;else echo 'wait 10s...'; fi ;n=$(( n - 1 )); sleep 10; done; exit 1
+        when: cassandra.rc == 0
+
+      - name: build kong
+        template:
+          src:  ../template/yml_template/kong/kong_cassandra.yaml
+          dest: ../generate/
+
+      - name: try import kong
+        shell: kubectl -n default  create -f ../generate/kong_cassandra.yaml
+        ignore_errors: true
+
+      - name: "create k8s-dashborad api , address: https://{{ kong_ip }}:8000/dashboard"
+        shell: bash ../tools/create_kong_api.sh {{ kong_ip }}
+        ignore_errors: true
+
+      - name: show kong api info
+        debug:
+          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashborad address: https://{{ kong_ip }}:8000/dashboard"
