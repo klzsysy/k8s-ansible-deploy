@@ -7,6 +7,7 @@
     - name: check go 
       shell: which go
       register: go_state
+      ignore_errors: true
 
     - name: install go
       yum: name=go state=present

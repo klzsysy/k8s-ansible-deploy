@@ -6,3 +6,4 @@ mkdir -p ~/bin
 cd ~/bin
 ln -s ../go/bin/* .
 
+true

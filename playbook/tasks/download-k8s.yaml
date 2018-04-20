@@ -18,7 +18,7 @@
     when: (k8s_dir.stat.exists == false) and (k8s_tar.stat.exists == true)
 
   - name: download k8s bin file
-    shell: cd ../generate && curl -o {{ k8s_ver }}-{{ k8s_file }} {{ k8s_url }}/{{ k8s_ver }}/{{ k8s_file }}  && tar -xzvf {{ k8s_ver }}-{{ k8s_file }}
+    shell: cd ../generate && wget -O {{ k8s_ver }}-{{ k8s_file }} {{ k8s_url }}/{{ k8s_ver }}/{{ k8s_file }}  && tar -xzvf {{ k8s_ver }}-{{ k8s_file }}
     when: (k8s_tar.stat.exists == false) and (k8s_dir.stat.exists == false)
     register: down_stat
 
