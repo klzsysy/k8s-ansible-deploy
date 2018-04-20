@@ -41,7 +41,7 @@ etcd_url=https://github.com/coreos/etcd/releases
 # kubernetes
 # https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.8.md 
 # downloads-for-v182
-k8s_ver=v1.8.2
+k8s_ver=v1.9.7
 k8s_url=https://dl.k8s.io
 k8s_file=kubernetes-server-linux-amd64.tar.gz
 
