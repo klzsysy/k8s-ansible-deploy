@@ -29,10 +29,10 @@
           path: ../generate/admin-key.pem
         register: admin_key
     
-      - name: check admin cert json exists or not
-        stat:
-          path: ../generate/admin-csr.json
-        register: admin_json
+      # - name: check admin cert json exists or not
+      #   stat:
+      #     path: ../generate/admin-csr.json
+      #   register: admin_json
 
       - name: get masters cluster ip
         shell: "echo {% for host in groups['nodes'] %}
@@ -56,23 +56,15 @@
         #when: admin_json.stat.exists == false
 
       - name: create kube-admin cret json
-        shell: cat ../template/json_template/admin-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate-temp/admin-csr.json
+        shell: cat ../template/json_template/admin-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate/admin-csr-origin.json
 
-      - name: diff admin-csr.json
-        shell: diff ../generate/admin-csr.json ../generate-temp/admin-csr.json
-        register: diff_admin_csr
-        ignore_errors: yes
-
-      - name: apply new admin-csr.json
-        copy: src=../generate-temp/admin-csr.json dest=../generate/admin-csr.json
-        when: (admin_csr.stat.exists == false) or
-          (admin_pem.stat.exists == false) or
-          (admin_key.stat.exists == false) or
-          (diff_admin_csr.rc != 0)
+      - name: try apply new admin-csr.json
+        copy: src=./generate/admin-csr-origin.json dest=../generate/admin-csr.json
+        register: admin_csr_json
 
       - name: create admin key and cert
         shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/admin-csr.json | cfssljson -bare ../generate/admin
-        when: (admin_csr.stat.exists == false) or
+        when: (admin_csr_json.changed == true) or
+          (admin_csr.stat.exists == false) or
           (admin_pem.stat.exists == false) or
-          (admin_key.stat.exists == false) or
-          (diff_admin_csr.rc != 0)
+          (admin_key.stat.exists == false)

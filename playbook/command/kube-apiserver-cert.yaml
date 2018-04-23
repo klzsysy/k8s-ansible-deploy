@@ -14,20 +14,20 @@
     vars:
       svc: kube-apiserver
     tasks:
-      # - name: check apiserver csr exists or not
-      #   stat: 
-      #     path: ../generate/apiserver.csr
-      #   register: apiserver_csr
+      - name: check apiserver csr exists or not
+        stat: 
+          path: ../generate/apiserver.csr
+        register: apiserver_csr
     
-      # - name: check apiserver pem exists or not
-      #   stat:
-      #     path: ../generate/apiserver.pem
-      #   register: apiserver_pem
+      - name: check apiserver pem exists or not
+        stat:
+          path: ../generate/apiserver.pem
+        register: apiserver_pem
     
-      # - name: check apiserver key exists or not
-      #   stat:
-      #     path: ../generate/apiserver-key.pem
-      #   register: apiserver_key
+      - name: check apiserver key exists or not
+        stat:
+          path: ../generate/apiserver-key.pem
+        register: apiserver_key
     
       # - name: check apiserver cert json exists or not
       #   stat:
@@ -78,10 +78,9 @@
         register: api_scr_json
 
 
-      # - name: apply svc_addr vars
-      #   shell: echo {{ service_cluster_ip_range }} | awk -F. '{printf "%s.%s.%s.1",$1,$2,$3}' | xargs -I {} sed -i "s/svc_addr/{}/g" ../generate/apiserver-csr.json 
-      #   when: new_csr.changed == true
-
       - name: create apiserver key and cert
         shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/apiserver-csr.json | cfssljson -bare ../generate/apiserver
-        when: api_scr_json.changed == true
+        when: (api_scr_json.changed == true ) or
+          (apiserver_csr.stat.exists == false) or
+          (apiserver_pem.stat.exists == false) or
+          (apiserver_key.stat.exists == false)

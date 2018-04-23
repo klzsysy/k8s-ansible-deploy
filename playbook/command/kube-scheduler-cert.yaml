@@ -56,19 +56,11 @@
         # when: scheduler_json.stat.exists == false
 
       - name: create kube-scheduler cert json
-        shell: cat ../template/json_template/scheduler-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate-temp/scheduler-csr.json
-
-      - name: diff scheduler-csr.json
-        shell: diff ../generate/scheduler-csr.json ../generate-temp/scheduler-csr.json
-        register: diff_scheduler_csr
-        ignore_errors: yes
+        shell: cat ../template/json_template/scheduler-csr.json | ../tools/format_json_template2.py add strip=, {{ NODES_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate/scheduler-csr-origin.json
     
       - name: apply new scheduler-csr.json
-        copy: src=../generate-temp/scheduler-csr.json dest=../generate/scheduler-csr.json
-        when: (scheduler_csr.stat.exists == false) or
-          (scheduler_pem.stat.exists == false) or
-          (scheduler_key.stat.exists == false) or
-          (diff_scheduler_csr.rc != 0)
+        copy: src=../generate/scheduler-csr-origin.json dest=../generate/scheduler-csr.json
+        register: scj
 
 
       - name: create scheduler key and cert
@@ -76,4 +68,4 @@
         when: (scheduler_csr.stat.exists == false) or
           (scheduler_pem.stat.exists == false) or
           (scheduler_key.stat.exists == false) or
-          (diff_scheduler_csr.rc != 0)
+          (scj.changed == true)
