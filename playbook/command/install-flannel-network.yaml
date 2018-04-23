@@ -41,6 +41,8 @@
         when: kube_flannel.changed == true
 
       - name: wait flannel ready..
-        shell: kubectl  -n kube-system get pod | grep kube-flannel-ds | grep '1/1' 
+        shell: kubectl  -n kube-system get pod | grep kube-flannel-ds | grep '1/1'
+        register: flannel_status
+        until: flannel_status.rc == 0
         retries: 30
         delay: 10
