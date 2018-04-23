@@ -18,7 +18,7 @@
   - name: unzip node-depend_rpm.tar.gz
     unarchive:
       src: /tmp/node-depend-rpm.tar.gz
-      dest: /tmp/
+      dest: /tmp/node-depend-rpm/
     register: unzip_stat
     when: node_depend_rpm.stat.exists == true
 
