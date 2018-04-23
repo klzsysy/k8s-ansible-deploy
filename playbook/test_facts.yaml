@@ -1,12 +1,27 @@
 ---
-- hosts: cluster
-  user: root
-  tasks:
-  - name: echo system
-    shell: echo {{ ansible_os_family }}
-    when: ansible_os_family == "Debian"
-  - name: install ntp on redhat linux
-    yum: name=git state=present
-    when: ansible_os_family == "RedHat"
-  - name: test2
-    shell: echo {{ ansible_eth0["ipv4"]["address"] }}
+  - hosts: cluster
+    user: root
+    tasks:
+      - name: echo system
+        shell: echo {{ ansible_os_family }}
+        when: ansible_os_family == "Debian"
+
+      - name: install ntp on redhat linux
+        yum: name=git state=present
+        when: ansible_os_family == "RedHat"
+
+
+      - name: echo...
+        shell: echo xx docker-1.12.6adsas
+        register: docker
+
+      - name: test ...
+        shell: echo docker
+        when: docker.stdout.find('docker') != 0
+        register: docker_status
+
+
+      - name: default var
+        shell: echo {{ docker_status.stdout | default(["some"]) }}
+
+        

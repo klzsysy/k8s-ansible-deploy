@@ -1,0 +1,4 @@
+---
+  - name: supported os check
+    shell: echo 'current not support the {{ ansible_os_family }} system, only RedHat family' ; false
+    when: ansible_os_family != "RedHat"
