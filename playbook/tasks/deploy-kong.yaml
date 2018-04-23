@@ -47,18 +47,22 @@
         retries: 30
         delay: 10
 
-      - name: "create k8s-dashborad api , address: https://{{ kong_ip }}:8000/dashboard"
-        shell: bash ../tools/create_k8s_dashborad_api.sh {{ kong_ip }}
+      - name: "create k8s-bashboard api , address: https://{{ kong_ip }}:8000/dashboard"
+        shell: bash ../tools/create_k8s_dashboard_api.sh {{ kong_ip }}
         ignore_errors: true
+        register: k8s-bashboard
+        until: k8s-bashboard.rc == 0
+        retries: 10
+        delay: 5
 
       - name: import kong dashboard
         shell: kubectl -n default  create -f ../template/yml_template/kong/kong-dashboard.yaml && bash ../tools/create_kong_dashboard_api.sh {{ kong_ip }}
         ignore_errors: true
 
-      - name: show kong api info from k8s dashborad
+      - name: show kong api info from k8s dashboard
         debug:
-          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashborad address: https://{{ kong_ip }}:8000/dashboard"
+          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashboard address: https://{{ kong_ip }}:8443/dashboard"
 
-      - name: show kong api info from kong dashborad
+      - name: show kong api info from kong dashboard
         debug:
-          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashborad address: http://{{ kong_ip }}:8000/kong-dashborad/"
+          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashboard address: http://{{ kong_ip }}:8000/kong-dashboard/"
