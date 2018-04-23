@@ -1,0 +1,41 @@
+---
+  - name: check docker rpm package
+    stat:
+      path: ../generate/docker-depend-rpm.tar.gz
+    register: node_depend_rpm
+
+  - name: mkdir temp folder
+    file:
+      path: ../generate-temp/docker-depend-rpm
+      state: directory
+    when: node_depend_rpm.stat.exists == false
+
+  - name: pre check docker package
+    shell: yum list docker-{{ docker_version }}
+    register: docker_package_a
+    ignore_errors: true
+    when: node_depend_rpm.stat.exists == false
+
+  - name: add docker repo
+    copy: 
+      src: ../template/repo/docker.repo
+      dest: /etc/yum.repos.d/
+    when: (node_depend_rpm.stat.exists == false) and (docker_package_a.rc == 1)
+
+  - name: pre check docker package
+    shell: yum makecache && yum list docker-engine-{{ docker_version }}
+    register: docker_package_b
+    when: node_depend_rpm.stat.exists == false and docker_package_a.rc == 1
+
+  - name: download rpm A plan
+    shell: yum install -y --downloadonly --downloaddir=../generate-temp/docker-depend-rpm/  net-tools bind-utils\
+     iptables-services bridge-utils bash-completion kexec-tools sos psacct device-mapper-persistent-data lvm2  docker-{{ docker_version }} && \
+     tar -czf ../generate/docker-depend-rpm.tar.gz ../generate-temp/docker-depend-rpm/*.rpm
+    when: (node_depend_rpm.stat.exists == false) and (docker_package_a.rc == 0)
+    register: a_plan
+
+  - name: download rpm B plan
+    shell: yum install -y --downloadonly --downloaddir=../generate-temp/docker-depend-rpm/  net-tools bind-utils\
+     iptables-services bridge-utils bash-completion kexec-tools sos psacct device-mapper-persistent-data lvm2  docker-engine-{{ docker_version }} && \
+     tar -czf ../generate/docker-depend-rpm.tar.gz ../generate-temp/docker-depend-rpm/*.rpm
+    when: (node_depend_rpm.stat.exists == false) and (a_plan.changed == false)

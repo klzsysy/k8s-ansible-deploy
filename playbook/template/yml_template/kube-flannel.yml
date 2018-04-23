@@ -104,7 +104,8 @@ spec:
       serviceAccountName: flannel
       initContainers:
       - name: install-cni
-        image: quay.io/coreos/flannel:v0.10.0-amd64
+        # mirror  quay.io/coreos/flannel:v0.10.0-amd64
+        image: klzsysy/flannel:v0.10.0-amd64
         command:
         - cp
         args:
@@ -118,13 +119,12 @@ spec:
           mountPath: /etc/kube-flannel/
       containers:
       - name: kube-flannel
-        image: quay.io/coreos/flannel:v0.10.0-amd64
+        image: klzsysy/flannel:v0.10.0-amd64
         command:
         - /opt/bin/flanneld
         args:
         - --ip-masq
         - --kube-subnet-mgr
-#        - --etcd-endpoints={{ ETCD_CLUSTER_NODE_URL.stdout }}
 #        - --etcd-cafile=/etc/etcd/ssl/ca.pem
 #        - --etcd-certfile=/etc/etcd/ssl/etcd.pem
 #        - --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem

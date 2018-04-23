@@ -1,3 +1,4 @@
-generate*
+generate
+generate-temp
 *.retry
 *.swp

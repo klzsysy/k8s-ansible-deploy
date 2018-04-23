@@ -35,4 +35,8 @@
 
       - name: scale kubedns replicas
         shell: kubectl --namespace=kube-system scale deployment kube-dns --replicas=2
-        when: import_dns.skipped == false
+        when: import_dns.changed == true
+        register: kubedns_status
+        until: kubedns_status.rc == 0
+        retries: 10
+        delay: 5

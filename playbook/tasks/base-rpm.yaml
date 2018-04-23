@@ -1,10 +1,9 @@
 ---
-  - name: install unzip
+  - name: install rpm
     yum:
-      name: unzip
+      name: "{{ item }}"
       state: present
-
-  - name: install nslookup
-    yum:
-      name: bind-utils
-      state: present
+    with_items:
+      - unzip
+      - bind-utils
+      - wget 

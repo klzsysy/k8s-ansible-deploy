@@ -29,10 +29,10 @@
           path: ../generate/apiserver-key.pem
         register: apiserver_key
     
-      - name: check apiserver cert json exists or not
-        stat:
-          path: ../generate/apiserver-csr.json
-        register: apiserver_json
+      # - name: check apiserver cert json exists or not
+      #   stat:
+      #     path: ../generate/apiserver-csr.json
+      #   register: apiserver_json
 
       - name: get masters cluster ip
         shell: "echo {% for host in groups['masters'] %}
@@ -55,31 +55,32 @@
 #        register: LB_INFO
         # when: apiserver_json.stat.exists == false
 
+      # 生成新的 api json
       - name: create kube-apiserver cert json
-        shell: cat ../template/json_template/apiserver-csr.json | ../tools/format_json_template2.py add {{ MASTER_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate-temp/apiserver-csr.json
+        shell: cat ../template/json_template/apiserver-csr.json | ../tools/format_json_template2.py add {{ MASTER_IP.stdout }} {{ LB_IP.stdout }} {{ ha_api_ip }}  > ../generate/apiserver-csr-origin.json
         # when: apiserver_json.stat.exists == false
         register: kube_apiserver
 
 
-      - name: apply new apiserver-csr.json
-        copy: src=../generate-temp/apiserver-csr.json dest=../generate/apiserver-csr-origin.json
-        when: (apiserver_csr.stat.exists == false) or
-          (apiserver_pem.stat.exists == false) or
-          (apiserver_key.stat.exists == false)
-        register: new_csr
-
-      - name: apply new apiserver-csr.json repeat
-        copy: src=../generate-temp/apiserver-csr.json dest=../generate/apiserver-csr.json
-        when: new_csr.changed == true
-
+      # - name: apply new apiserver-csr.json
+      #   copy: src=../generate-temp/apiserver-csr.json dest=../generate/apiserver-csr-origin.json
+      #   when: (apiserver_csr.stat.exists == false) or
+      #     (apiserver_pem.stat.exists == false) or
+      #     (apiserver_key.stat.exists == false)
+      #   register: new_csr
 
       - name: apply svc_addr vars
-        shell: echo {{ service_cluster_ip_range }} | awk -F. '{printf "%s.%s.%s.1",$1,$2,$3}' | xargs -I {} sed -i "s/svc_addr/{}/g" ../generate/apiserver-csr.json 
-        when: new_csr.changed == true
+        shell: echo {{ service_cluster_ip_range }} | awk -F. '{printf "%s.%s.%s.1",$1,$2,$3}' | xargs -I {} sed -i "s/svc_addr/{}/g" ../generate/apiserver-csr-origin.json
+
+      - name: try new apiserver-csr.json repeat
+        copy: src=../generate/apiserver-csr-origin.json dest=../generate/apiserver-csr.json
+        # when: new_csr.changed == true
+        register: api_scr_json
+
 
       - name: create apiserver key and cert
         shell:  cfssl gencert -ca=../generate/ca.pem -ca-key=../generate/ca-key.pem -config=../template/json_template/ca-config.json -profile=sonny ../generate/apiserver-csr.json | cfssljson -bare ../generate/apiserver
-        when: (apiserver_csr.stat.exists == false) or
+        when: (api_scr_json.changed == true ) or
+          (apiserver_csr.stat.exists == false) or
           (apiserver_pem.stat.exists == false) or
-          (apiserver_key.stat.exists == false) or
-          (new_csr.changed == true)
+          (apiserver_key.stat.exists == false)

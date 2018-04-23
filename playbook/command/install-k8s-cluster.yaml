@@ -1,15 +1,17 @@
 ---
+- import_playbook: require_check.yaml
+
 # 修改主机名
 - import_playbook: hostname.yaml
+
+# 安装控制机依赖
+- import_playbook: control.yaml
 
 # 安装系统基本依赖
 - import_playbook: system_base.yaml 
 
 # 关闭防火墙
 - import_playbook: firewalld.yaml
-
-# 安装控制机依赖
-- import_playbook: control.yaml
 
 # 下载二进制文件
 - import_playbook: download_bin.yaml
@@ -23,8 +25,10 @@
 # 安装etcd
 - import_playbook: install-etcd-cluster.yaml
 
-# 安装apisService
+# 安装master
 - import_playbook: install-kube-apiserver.yaml
+- import_playbook: install-kube-controller-manager.yaml
+- import_playbook: install-kube-scheduler.yaml
 
 - import_playbook: conf-lb-vip.yaml
 

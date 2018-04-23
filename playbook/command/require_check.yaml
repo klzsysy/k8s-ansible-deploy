@@ -1,0 +1,4 @@
+---
+  - hosts: cluster
+    tasks:
+      - include_tasks: ../tasks/require.yaml

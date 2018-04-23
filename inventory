@@ -2,16 +2,16 @@
 localhost
 
 [masters]
-k8s-master0[1:3].ifaii.io
+k8s-0[1:3].k8s.local
 
 [etcd:children]
 masters
 
 [nodes]
-k8s-master0[1:3].ifaii.io
+k8s-0[4:6].k8s.local
 
 [lb]
-k8s-master0[1:2].ifaii.io
+k8s-0[1:2].k8s.local
 
 
 # 集群范围
@@ -41,7 +41,7 @@ etcd_url=https://github.com/coreos/etcd/releases
 # kubernetes
 # https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.8.md 
 # downloads-for-v182
-k8s_ver=v1.8.2
+k8s_ver=v1.9.7
 k8s_url=https://dl.k8s.io
 k8s_file=kubernetes-server-linux-amd64.tar.gz
 
@@ -54,7 +54,9 @@ cni_plugins_ver=v0.6.0
 cni_plugins_url=https://github.com/containernetworking/plugins/releases
 
 # docker
+docker_version=1.12.6
 docker_storage=/dev/sdb
+docker_options='--log-driver=journald'
 
 # svc addr range
 service_cluster_ip_range="10.96.0.0/12"
@@ -62,10 +64,10 @@ service_cluster_ip_range="10.96.0.0/12"
 pod_cluster_cidr="10.244.0.0/16"
 
 # KUBE_APISERVER ha ip
-ha_api_ip=192.168.40.8
+ha_api_ip=172.16.40.8
 
 # kong api gateway ip, the ip must in node
-kong_ip=192.168.40.8
+kong_ip=172.16.40.8
 
 # apiserver port
 apiserver_port=6443
