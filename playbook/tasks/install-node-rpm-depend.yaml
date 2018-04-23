@@ -15,12 +15,11 @@
       name: /tmp/node-depend-rpm/
       state: directory
   
-  - name: unzip node-depend_rpm.tar.gz
+  - name: unzip /tmp/node-depend-rpm.tar.gz
     unarchive:
       src: ../generate/node-depend-rpm.tar.gz
       dest: /tmp/node-depend-rpm/
     register: unzip_stat
-    when: node_depend_rpm.stat.exists == true
 
   - name: install node depend rpm for offline
     yum:
@@ -30,10 +29,10 @@
     with_fileglob:
       - /tmp/node-depend-rpm/generate-temp/*.rpm
 
-  - name: install node depend rpm online
-    yum:  name={{ item }} state=present
-    with_items:
-      - ebtables
-      - socat
-      - util-linux
-      - conntrack-tools
+  # - name: install node depend rpm online
+  #   yum:  name={{ item }} state=present
+  #   with_items:
+  #     - ebtables
+  #     - socat
+  #     - util-linux
+  #     - conntrack-tools
