@@ -25,9 +25,9 @@
         when: cassandra.rc == 0
 
       - name: wait kong-migration ready
-        shell:  [ "$(kubectl get job -n default kong-migration | awk 'NR==2 {print $3}')" -eq 1 ]
+        shell:  kubectl get job -n default kong-migration | awk 'NR==2 {print $3}'
         register: kong_migration_status
-        until: kong_migration_status.rc == 0
+        until: kong_migration_status.stdout == 1
         retries: 30
         delay: 10
 
