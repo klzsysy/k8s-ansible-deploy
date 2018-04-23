@@ -20,7 +20,7 @@
         register: unzip_stat
 
       - name: install rpm package
-        shell: yum localinstall /tmp/docker-depend-rpm/*.rpm
+        shell: yum localinstall -y /tmp/generate-temp/docker-depend-rpm/*.rpm
         register: installed
 
       - name: docker name get
