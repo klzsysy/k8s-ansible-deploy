@@ -27,8 +27,8 @@
       - name: wait kong-migration ready
         shell:  kubectl get job -n default kong-migration | awk 'NR==2 {print $3}'
         register: kong_migration_status
-        until: kong_migration_status.stdout == 1
-        retries: 30
+        until: kong_migration_status.stdout.find("1") != -1
+        retries: 60
         delay: 10
 
       - name: build kong
@@ -43,7 +43,7 @@
       - name: kong ready
         shell: kubectl -n default get pod | grep kong-rc | awk '{print $2}' | wc -l
         register: kong_status
-        until: kong_status.stdout == 3
+        until: kong_status.stdout.find("3") != -1
         retries: 30
         delay: 10
 
