@@ -1,14 +1,14 @@
 ---
-  - name: copy node-depend-rpm to node
-    copy:
-      src: ../generate/node-depend-rpm.tar.gz
-      dest: /tmp/
-    ignore_errors: true
+  # - name: copy node-depend-rpm to node
+  #   copy:
+  #     src: ../generate/node-depend-rpm.tar.gz
+  #     dest: /tmp/
+  #   ignore_errors: true
 
-  - name: check rpm package
-    stat:
-      path: /tmp/node-depend-rpm.tar.gz
-    register: node_depend_rpm
+  # - name: check rpm package
+  #   stat:
+  #     path: /tmp/node-depend-rpm.tar.gz
+  #   register: node_depend_rpm
 
   - name: makdir rpm temp
     file:
@@ -17,7 +17,7 @@
   
   - name: unzip node-depend_rpm.tar.gz
     unarchive:
-      src: /tmp/node-depend-rpm.tar.gz
+      src: ../generate/node-depend-rpm.tar.gz
       dest: /tmp/node-depend-rpm/
     register: unzip_stat
     when: node_depend_rpm.stat.exists == true

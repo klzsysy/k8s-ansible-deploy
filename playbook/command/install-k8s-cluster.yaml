@@ -23,8 +23,10 @@
 # 安装etcd
 - import_playbook: install-etcd-cluster.yaml
 
-# 安装apisService
+# 安装master
 - import_playbook: install-kube-apiserver.yaml
+- import_playbook: install-kube-controller-manager.yaml
+- import_playbook: install-kube-scheduler.yaml
 
 - import_playbook: conf-lb-vip.yaml
 
