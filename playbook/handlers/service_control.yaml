@@ -1,0 +1,27 @@
+---
+  - name: debug
+    debug:
+      msg: "svc = {{ app1 }}"
+
+  - name: reload {{ app1 }}
+    command: systemctl daemon-reload
+
+  - name: start {{ app1 }}
+    service:
+      name: "{{ app1 }}"
+      state: started
+
+  - name: enable {{ app1 }} 
+    service:
+      name: "{{ app1 }}"
+      enabled: yes
+
+  - name: restart {{ app1 }}
+    service:
+      name: "{{ app1 }}"
+      state: restarted
+
+  - name: stop {{ app1 }}
+    service:
+      name: "{{ app1 }}"
+      state: stopped

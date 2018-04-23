@@ -1,9 +1,36 @@
 ---
+  - hosts: localhost
+    connection: local
+    gather_facts: no
+    tasks:
+      - include_tasks: ../tasks/down-docker-rpm.yaml
+
   - hosts: nodes
     vars:
       svc: docker
+      app1: docker-engine
     tasks:
-      - include_tasks: ../tasks/install-docker.yaml 
+      - name: check curr docker version
+        shell: rpm -qa | grep  docker | grep {{ docker_version }} || (rpm -qa | grep docker | xargs rpm -e ; true)
+      
+      - name: unzip docker-depend-rpm.tar.gz
+        unarchive:
+          src: ../generate/docker-depend-rpm.tar.gz
+          dest: /tmp/
+        register: unzip_stat
+
+      - name: install rpm package
+        shell: yum localinstall /tmp/docker-depend-rpm/*.rpm
+        register: installed
+
+      - name: docker name get
+        shell: echo app1
+        # finded
+        when: installed.stdout.find('docker-engine') != -1
+        register: var_docker_engine
+
+      - include_tasks: ../tasks/config-docker-lvm.yaml
 
     handlers:
       - include: ../handlers/systemctl.yaml
+      - include: ../handlers/service_control.yaml

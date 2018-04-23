@@ -54,7 +54,9 @@ cni_plugins_ver=v0.6.0
 cni_plugins_url=https://github.com/containernetworking/plugins/releases
 
 # docker
+docker_version=1.12.6
 docker_storage=/dev/sdb
+docker_options='--log-driver=journald'
 
 # svc addr range
 service_cluster_ip_range="10.96.0.0/12"
