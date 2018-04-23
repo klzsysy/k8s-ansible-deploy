@@ -21,14 +21,19 @@
       dest: /tmp/node-depend-rpm/
     register: unzip_stat
 
+  - name: Get files on remote machine
+    find:
+      paths: /tmp/node-depend-rpm/generate-temp/
+    register: rpm
+
   - name: install node depend rpm for offline
     yum:
       name: "{{ item }}"
       state: present
     when: unzip_stat.failed == false
-    with_fileglob:
-      - /tmp/node-depend-rpm/generate-temp/*.rpm
+    with_items: "{{ rpm.files }}"
 
+    
   # - name: install node depend rpm online
   #   yum:  name={{ item }} state=present
   #   with_items:
