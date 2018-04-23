@@ -37,4 +37,3 @@
       - socat
       - util-linux
       - conntrack-tools
-    when: node_depend_rpm.stat.exists == false
