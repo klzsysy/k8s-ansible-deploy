@@ -69,4 +69,4 @@
         when: (controller_manager_csr.stat.exists == false) or
           (controller_manager_pem.stat.exists == false) or
           (controller_manager_key.stat.exists == false) or
-          (cmc_json.chagned == true)
+          (cmc_json.changed == true)
