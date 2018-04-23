@@ -28,12 +28,12 @@
 
   - name: install node depend rpm for offline
     yum:
-      name: "{{ item }}"
+      name: "{{ item.path }}"
       state: present
     when: unzip_stat.failed == false
     with_items: "{{ rpm.files }}"
 
-    
+
   # - name: install node depend rpm online
   #   yum:  name={{ item }} state=present
   #   with_items:
