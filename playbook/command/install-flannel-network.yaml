@@ -35,6 +35,12 @@
         when: kube_flannel.changed == true
         ignore_errors: true
 
+
       - name: import flannel network plugin
         shell: kubectl create -f ../generate/kube-flannel.yml
         when: kube_flannel.changed == true
+
+      - name: wait flannel ready..
+        shell: kubectl  -n kube-system get pod | grep kube-flannel-ds | grep '1/1' 
+        retries: 30
+        delay: 10
