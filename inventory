@@ -62,10 +62,10 @@ service_cluster_ip_range="10.96.0.0/12"
 pod_cluster_cidr="10.244.0.0/16"
 
 # KUBE_APISERVER ha ip
-ha_api_ip=192.168.40.8
+ha_api_ip=172.16.40.8
 
 # kong api gateway ip, the ip must in node
-kong_ip=192.168.40.8
+kong_ip=172.16.40.8
 
 # apiserver port
 apiserver_port=6443
