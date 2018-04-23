@@ -1,0 +1,65 @@
+kind: DeploymentConfig
+apiVersion: v1
+metadata:
+  name: kong-dashboard
+  labels:
+    app: kong-dashboard
+spec:
+  replicas: 1
+  selector:
+    deploymentconfig: kong-dashboard
+  strategy:
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        app: kong-dashboard
+        deploymentconfig: kong-dashboard
+    spec:
+      containers:
+      - name: kong-dashboard
+        image: pgbi/kong-dashboard:latest
+        # image: docker.vpclub.cn/pgbi/kong-dashboard:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: TZ
+          value: "Asia/Shanghai"
+        - name: KONG_HOST
+          value: http://kong-admin:8001
+        - name: KONG_DASHBOARD_USER
+          value: admin
+        - name: KONG_DASHBOARD_PASSWORD
+          value: "k8s.kong"
+        command: [ "/bin/sh", "-c", "./docker/entrypoint.sh start --kong-url ${KONG_HOST} --basic-auth ${KONG_DASHBOARD_USER}=${KONG_DASHBOARD_PASSWORD}" ]
+        ports:
+        - name: dashboard
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 750m
+            memory: 64Mi
+      resources:
+        limits:
+          memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kong-dashboard
+  name: kong-dashboard
+spec:
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: kong-dashboard
