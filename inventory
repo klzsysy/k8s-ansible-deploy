@@ -13,7 +13,7 @@ k8s-0[1:6].k8s.local
 [lb]
 k8s-0[1:2].k8s.local
 
-
+# -------------------------- 不要修改 start ------
 # 集群范围
 [cluster:children]
 masters
@@ -31,32 +31,59 @@ cluster
 control
 cert_host
 
+# -------------------------- 不要修改 end ------
 
 [hosts:vars]
 ntp_server=1.cn.pool.ntp.org
+
+
+# 文件下载部分 网络不好可提前下载文件放入指定路径，注意版本号要匹配
+# playbook文件夹下的 generate 目录不存在自己创建
+
+# -----
 # etcd info
+# 下载后的文件名 playbook/generate/etcd-v3.2.9-linux-amd64.tar.gz
+
 etcd_ver=v3.2.9
 etcd_url=https://github.com/coreos/etcd/releases
 
+# -----
 # kubernetes
-# https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.8.md 
-# downloads-for-v182
+# https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.9.md 
+# downloads-for-v197
+# 下载后的文件名 playbook/generate/v1.9.7-kubernetes-server-linux-amd64.tar.gz 
+# 可手动下载重命名放在改目录
+
 k8s_ver=v1.9.7
 k8s_url=https://dl.k8s.io
 k8s_file=kubernetes-server-linux-amd64.tar.gz
 
+# -----
 # cni
+# 下载后的文件名 playbook/generate/cni-amd64-v0.6.0.tgz
+
 cni_ver=v0.6.0
 cni_url=https://github.com/containernetworking/cni/releases
 
+# -----
 # cni plugins
+# 下载后的文件名 playbook/generate/cni-plugins-amd64-v0.6.0.tgz
+
 cni_plugins_ver=v0.6.0
 cni_plugins_url=https://github.com/containernetworking/plugins/releases
 
-# docker
+# -----
+# docker configure
 docker_version=1.12.6
+
+# direct-lvm mode for production, device-mapper-driver
+# help https://docs.docker.com/storage/storagedriver/device-mapper-driver/#configure-direct-lvm-mode-for-production
+# direct-lvm 模式的docker存储，准备一块未初始化过的空硬盘，如果已经初始化请清除所有分区信息后再使用，包括lvm配置
 docker_storage=/dev/sdb
+
 docker_options='--log-driver=journald'
+# -----
+
 
 # svc addr range
 service_cluster_ip_range="10.96.0.0/12"
@@ -64,19 +91,25 @@ service_cluster_ip_range="10.96.0.0/12"
 pod_cluster_cidr="10.244.0.0/16"
 
 # KUBE_APISERVER ha ip
-# 路由可达的不存在的的ip，将作为虚拟ip
+# 提供路由可达的不存在的的ip，将作为虚拟ip
 ha_api_ip=172.16.40.8
 
-# kong api gateway ip, the ip must in node
-# 必须在node节点上 否则不起作用，可以是node ip，也可以是node上的虚拟ip
+# apiserver port
+# apiserver 地址最终为 https://$ha_api_ip:$apiserver_port
+apiserver_port=6443
+
+
+# kong api gateway ip
+# 必须在node节点上 否则不起作用，可以是node ip，也可以是node上的虚拟ip, 注意端口没有被其他应用占用
+# 可用,分离填写多个
+# 例如 kong_ip=172.16.40.8,172.16.40.9,172.16.40.10
+
 kong_ip=172.16.40.8
-# 外部访问集群的入口端口
+# 外部访问集群的入口端口，通过这些端口到达 kong
 kong_gw_http_port=80
 kong_gw_https_port=443
 
-# apiserver port
-apiserver_port=6443
-
+# --- other
 cluster_dns=10.96.0.10
 dns_domain=cluster.local
 

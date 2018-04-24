@@ -11,8 +11,9 @@
   - name: update time
     shell: ntpdate {{ ntp_server }}
     notify:
-    - restart svc
+      - restart svc
     register: ntp_state
+    ignore_errors: true
   
   - name: ntpd service enable
     service: name=ntpd enabled=yes
@@ -20,8 +21,6 @@
   - name: update time 2
     shell: "nslookup 1.cn.pool.ntp.org 114.114.114.114 | tail -n 2 | head -n1 | awk -F: '{print $2}' | xargs ntpdate"
     notify:
-    - restart svc
+      - restart svc
     when: ntp_state.rc != 0
-#    handlers:
-#    - name: restart ntpd
-#      service: name=ntpd state=restarted 
+    ignore_errors: true

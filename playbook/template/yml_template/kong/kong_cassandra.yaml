@@ -11,7 +11,7 @@ spec:
   selector:
     app: kong
   externalIPs:
-    - {{ kong_ip }}
+{{ external_ips.stdout }}
 
 ---
 apiVersion: v1
@@ -27,7 +27,7 @@ spec:
   selector:
     app: kong
   externalIPs:
-    - {{ kong_ip }}
+{{ external_ips.stdout }}
 
 ---
 apiVersion: v1
@@ -43,7 +43,7 @@ spec:
   selector:
     app: kong
   externalIPs:
-    - {{ kong_ip }}
+{{ external_ips.stdout }}
 
 
 ---
@@ -60,7 +60,7 @@ spec:
   selector:
     app: kong
   externalIPs:
-    - {{ kong_ip }}
+{{ external_ips.stdout }}
 
 ---
 apiVersion: extensions/v1beta1
