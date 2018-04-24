@@ -30,8 +30,6 @@
       - name: import kubedns-svc and kubedns-controller
         shell: kubectl apply -f ../generate/kubedns-controller.yaml ;  kubectl apply -f ../generate/kubedns-svc.yaml
         ignore_errors: true
-        register: import_dns
-        when: kubedns_svc.changed == true or controller.changed == true
 
       - name: wait kubedns ready
         shell: kubectl get pod -n kube-system | grep kube-dns | grep 3/3 -q
