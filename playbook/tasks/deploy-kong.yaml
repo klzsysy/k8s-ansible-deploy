@@ -47,6 +47,18 @@
         retries: 30
         delay: 10
 
+      - name: import kong dashboard
+        shell: kubectl -n default  apply -f ../template/yml_template/kong/kong-dashboard.yaml
+        ignore_errors: true
+
+      - name: wait kong dashboard ready
+        shell: kubectl -n default get pod | grep kong-dashboard | grep '1/1'
+        register: kong_bashboard
+        ignore_errors: true
+        until: kong_bashboard.rc == 0
+        retries: 10
+        delay: 5
+
       - name: "create k8s-bashboard api , address: https://{{ kong_ip }}:8000/dashboard"
         shell: bash ../tools/create_k8s_dashboard_api.sh {{ kong_ip }}
         ignore_errors: true
@@ -55,26 +67,28 @@
         retries: 10
         delay: 5
 
-      - name: import kong dashboard
-        shell: kubectl -n default  create -f ../template/yml_template/kong/kong-dashboard.yaml
-        ignore_errors: true
-
       - name: create kong dashboard api
         shell: bash ../tools/create_kong_dashboard_api.sh {{ kong_ip }}
         ignore_errors: true
-        register: kong_bashboard
-        until: kong_bashboard.rc == 0
+        register: kong_bashboard_api
+        until: kong_bashboard_api.rc == 0
         retries: 10
         delay: 5
 
+      # show info
       - name: show kong api info from k8s dashboard
         debug:
-          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashboard address: https://{{ kong_ip }}:{{ kong_gw_https_port }}/dashboard"
+          msg: "k8s dashboard address: https://{{ kong_ip }}:{{ kong_gw_https_port }}/dashboard"
 
       - name: show kong api info from kong dashboard
         debug:
-          msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashboard address: http://{{ kong_ip }}:{{ kong_gw_http_port }}/kong-dashboard/"
+          msg: "kong api gateway dashboard address: http://{{ kong_ip }}:{{ kong_gw_http_port }}/kong-dashboard/ , default user=admin password=k8s.kong, Defined in dashboard environment "
 
       - name: show cluster admin token
         shell: "kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep -A 10 token:"
         ignore_errors: true
+
+      - name: show time
+        debug:
+          msg: enjoy!
+        when: k8s_bashboard.rc == 0 and kong_bashboard_api.rc == 0
