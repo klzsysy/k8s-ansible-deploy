@@ -5,7 +5,7 @@ metadata:
 spec:
   ports:
   - name: kong-proxy
-    port: 8000
+    port: {{ kong_gw_http_port }}
     targetPort: 8000
     protocol: TCP
   selector:
@@ -21,7 +21,7 @@ metadata:
 spec:
   ports:
   - name: kong-proxy-ssl
-    port: 8443
+    port: {{ kong_gw_https_port }}
     targetPort: 8443
     protocol: TCP
   selector:
@@ -77,10 +77,18 @@ spec:
     spec:
       containers:
       - name: kong
-        image: kong
+        image: kong:0.12
         env:
+          # ---- 兼容 0.13
+          # - name: KONG_ADMIN_LISTEN
+          #   value: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+
+          # ---- 兼容 0.12
           - name: KONG_ADMIN_LISTEN
-            value: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+            value: 0.0.0.0:8001
+          - name: KONG_ADMIN_LISTEN_SSL
+            value: 0.0.0.0:8444
+            # ---------
           - name: KONG_DATABASE
             value: cassandra
           - name: KONG_CASSANDRA_CONTACT_POINTS
