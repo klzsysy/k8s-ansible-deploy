@@ -1,5 +1,5 @@
-kind: DeploymentConfig
-apiVersion: v1
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: kong-dashboard
   labels:
@@ -7,21 +7,12 @@ metadata:
 spec:
   replicas: 1
   selector:
-    deploymentconfig: kong-dashboard
-  strategy:
-    resources: {}
-    rollingParams:
-      intervalSeconds: 1
-      maxSurge: 25%
-      maxUnavailable: 25%
-      timeoutSeconds: 600
-      updatePeriodSeconds: 1
-    type: Rolling
+    matchLabels:
+      app: kong-dashboard
   template:
     metadata:
       labels:
         app: kong-dashboard
-        deploymentconfig: kong-dashboard
     spec:
       containers:
       - name: kong-dashboard
@@ -42,13 +33,6 @@ spec:
         - name: dashboard
           containerPort: 8080
           protocol: TCP
-        resources:
-          requests:
-            cpu: 750m
-            memory: 64Mi
-      resources:
-        limits:
-          memory: "256Mi"
 ---
 apiVersion: v1
 kind: Service

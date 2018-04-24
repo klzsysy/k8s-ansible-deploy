@@ -11,7 +11,7 @@
       - name: cassandra info
         debug:
           msg: cassandra Already exist, reinstall please delete the current
-        when: cassandra.rc != 0 
+        when: cassandra.rc != 0
 
       - name: wait cassandra ready
         shell: kubectl -n default  get pod cassandra-0 | grep 1/1 -q
@@ -22,7 +22,7 @@
 
       - name: import kong-migration job
         shell: kubectl delete job kong-migration ; kubectl create -f ../template/yml_template/kong/kong_migration_cassandra.yaml
-        when: cassandra.rc == 0
+        when: cassandra.stdout.find("statefulset \"cassandra\" created") != -1
 
       - name: wait kong-migration ready
         shell:  kubectl get job -n default kong-migration | awk 'NR==2 {print $3}'
@@ -37,11 +37,11 @@
           dest: ../generate/
 
       - name: try import kong
-        shell: kubectl -n default  create -f ../generate/kong_cassandra.yaml
+        shell:  kubectl -n default  apply -f ../generate/kong_cassandra.yaml
         ignore_errors: true
 
-      - name: kong ready
-        shell: kubectl -n default get pod | grep kong-rc | awk '{print $2}' | wc -l
+      - name: wait kong ready
+        shell: kubectl -n default get pod | grep kong-rc | grep '1/1' | wc -l
         register: kong_status
         until: kong_status.stdout.find("3") != -1
         retries: 30
@@ -74,3 +74,7 @@
       - name: show kong api info from kong dashboard
         debug:
           msg: "exec: 'kubectl get svc' get kong api gateway info,  k8s dashboard address: http://{{ kong_ip }}:{{ kong_gw_http_port }}/kong-dashboard/"
+
+      - name: show cluster admin token
+        shell: "kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep -A 10 token:"
+        ignore_errors: true

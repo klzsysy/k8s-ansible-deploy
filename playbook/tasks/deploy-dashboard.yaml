@@ -6,3 +6,7 @@
       - name: import dashboard yaml
         shell: kubectl create -f ../template/yml_template/kubernetes-dashboard.yaml
         ignore_errors: true
+
+      - name: create cluster admin Account
+        shell: kubectl create -f ../template/yml_template/cluster-admin.yaml
+        ignore_errors: true
