@@ -30,6 +30,10 @@
         until: kong_migration_status.stdout.find("1") != -1
         retries: 60
         delay: 10
+      
+      - name: build external_ips string
+        shell: echo '{{ kong_ip | default(ha_api_ip) }}' | sed 's/[,;]/\n/g' | sed 's/^[ t]*//g' | sed 's/[ t]*$//g' | sed 's/\(.*\)/    - \1/g'
+        register: external_ips
 
       - name: build kong
         template:
