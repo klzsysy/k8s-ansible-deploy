@@ -5,7 +5,7 @@ metadata:
 spec:
   ports:
   - name: kong-proxy
-    port: 8000
+    port: {{ kong_gw_http_port }}
     targetPort: 8000
     protocol: TCP
   selector:
@@ -21,7 +21,7 @@ metadata:
 spec:
   ports:
   - name: kong-proxy-ssl
-    port: 8443
+    port: {{ kong_gw_https_port }}
     targetPort: 8443
     protocol: TCP
   selector:

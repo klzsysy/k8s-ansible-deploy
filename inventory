@@ -70,6 +70,9 @@ ha_api_ip=172.16.40.8
 # kong api gateway ip, the ip must in node
 # 必须在node节点上 否则不起作用，可以是node ip，也可以是node上的虚拟ip
 kong_ip=172.16.40.8
+# 外部访问集群的入口端口
+kong_gw_http_port=80
+kong_gw_https_port=443
 
 # apiserver port
 apiserver_port=6443
