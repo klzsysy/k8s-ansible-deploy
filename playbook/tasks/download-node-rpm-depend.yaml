@@ -5,6 +5,10 @@
     register: node_depend_rpm
 
   - name: download rpm
-    shell: yum install -y ebtables socat util-linux conntrack-tools --downloadonly --downloaddir=../generate-temp/ && tar -czf ../generate/node-depend-rpm.tar.gz ../generate-temp/*.rpm
+    shell: yum install -y ebtables socat util-linux conntrack-tools --downloadonly --downloaddir=../generate-temp/ && tar -czf ../generate/node-depend-rpm.tar.gz ../generate-temp/*.rpm 
     when: node_depend_rpm.stat.exists == false
     ignore_errors: true
+
+  # - name: clear node-depend-rpm temp
+  #   shell: rm -rf ../generate-temp/*.rpm || true
+  #   when: node_depend_rpm.stat.exists == true

@@ -1,0 +1,62 @@
+---
+  - hosts: localhost
+    gather_facts: no
+    connection: local
+    vars:
+      - args1: install
+      - args2: reinstall
+    tasks:
+      - name: check glusterfs rpm package
+        stat:
+          path: ../generate/glusterfs.tar.gz
+        register: glusterfs_tar
+      
+      - name: check glusterfs local install status 
+        shell:  rpm -qa | grep glusterfs-fuse
+        ignore_errors: true
+        register: glusterfs_status
+
+      - name: download glusterfs
+        shell: yum {{ args2 if glusterfs_status.rc == 0 else args1 }} -y --downloadonly --downloaddir=../generate-temp/glusterfs/ \
+          glusterfs-fuse attr glusterfs glusterfs-client-xlators glusterfs-libs && \
+          tar -czf ../generate/glusterfs.tar.gz ../generate-temp/glusterfs/*.rpm
+        when: glusterfs_tar.stat.exists == false
+
+
+  - hosts: glusterfs
+    vars:
+      svc: glusterfs
+    tasks:
+      - name: open firewalld
+        iptables:
+          chain: INPUT
+          action: insert
+          protocol: tcp
+          destination_port: {{ item.port }}
+          state: present
+          jump: ACCEPT
+          comment: {{ item.comment }}
+        with_items:
+          - { port: '2222', comment: 'sshd (if running GlusterFS in a pod)'}
+          - { port: '24007:24008', comment: 'GlusterFS Management, GlusterFS RDMA'}
+          - { port: '49152:49252', comment: 'Each brick for every volume on the host requires its own port. For every new brick' }
+
+      - name: loaded kernel modules
+        shell: modprobe {{ item }}
+        with_items:
+          - dm_snapshot
+          - dm_mirror
+          - dm_thin_pool
+
+      - name: configure system start loaded kernel modules
+        lineinfile:
+          path: /etc/sysconfig/modules/glusterfs.modules
+          create: yes
+          state: present
+          mode: 755
+          line: "{{ item }}"
+        with_items:
+          - '#!/bin/sh'
+          - modprobe dm_snapshot
+          - modprobe dm_mirror
+          - modprobe dm_thin_pool
