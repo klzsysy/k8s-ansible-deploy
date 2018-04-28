@@ -20,7 +20,9 @@ kubectl -n ${ns} label --overwrite secret heketi-config-secret glusterfs=heketi-
 kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-f48vw -- heketi-cli -s http://localhost:8080 --user admin --secret '' topology load --json=/etc/heketi/topology.json | tee status_file
  grep -q "Unable" status_file && exit 
 
-### kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-f48vw -- heketi-cli -s http://localhost:8080 --user admin --secret '' setup-openshift-heketi-storage --listfile=/tmp/heketi-storage.json
+
+kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-f48vw -- heketi-cli -s http://localhost:8080 --user admin --secret '' setup-openshift-heketi-storage --listfile=/tmp/heketi-storage.json
+
 kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-f48vw -- cat /tmp/heketi-storage.json | kubectl -n glusterfs create -f -
 
 # wait
@@ -28,20 +30,13 @@ kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-f48vw -- cat /tmp/heketi-s
 kubectl -n glusterfs label --overwrite svc heketi-storage-endpoints glusterfs=heketi-storage-endpoints heketi=storage-endpoints
 kubectl -n glusterfs delete all,service,jobs,deployment,secret --selector="deploy-heketi"
 
-echo kube-templates/deploy-heketi-deployment.yaml | kubectl -n ${ns} create -f - 2>&1
-kubectl -n glusterfs get pods --no-headers --show-all --selector=deploy-heketi=pod
+kubectl -n ${ns}  create -f heketi-deployment.yaml
+# ---
 
-kubectl -n glusterfs describe svc/deploy-heketi
-heketi_service=10.244.1.12:8080
-heketi_pod=deploy-heketi-7c4898d9cd-72788
+heketi_pod=$(kubectl -n ${ns} get pod --no-headers --show-all --selector="heketi" | awk '{print $1}')
+heketi_service=$(kubectl -n ${ns}  describe svc/heketi | grep "Endpoints:" | awk '{print $2}')
 
-kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-72788 -- curl http://10.244.1.12:8080/hello
+s=$(kubectl -n ${ns} exec -i "${heketi_pod}" -- curl http://${heketi_service}/hello)
+[ ${s} != "Hello from Heketi" ] && exit
 
-kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-72788 -- heketi-cli -s http://localhost:8080 --user admin --secret ''
-kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-72788 -- heketi-cli -s http://localhost:8080 --user admin --secret '' topology load --json=/etc/heketi/topology.json
-
-
-
-
-
-kubectl -n glusterfs exec -i deploy-heketi-7c4898d9cd-qfs2g -- heketi-cli -s http://localhost:8080 --user admin --secret '' topology load --json=/etc/heketi/topology.json
+kubectl create -f glusterfs-storageclass.yaml

@@ -27,8 +27,8 @@
     tasks:
       - name: install glusterfs rpm
         unarchive:
-          src: .../../generate/glusterfs.tar.gz
-          dest: /tmp/glusterfs-rpm/
+          src: ../../generate/glusterfs.tar.gz
+          dest: /tmp/
         register: unzip_stat
 
       - name: install rpm package for glusterfs
