@@ -8,4 +8,5 @@ spec:
   storageClassName: glusterfs-storage
   resources:
     requests:
-      storage: 10Gi
+      storage: 10G
+        
