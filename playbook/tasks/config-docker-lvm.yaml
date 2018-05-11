@@ -46,12 +46,12 @@
 
   # ----------------------- end config docker lvm -----
     
-  - name: config /etc/sysconfig/docker
-    template:
-      src: ../template/conf/docker
-      dest: /etc/sysconfig/
-    notify:
-      - restart {{ var_docker_engine.stdout | default("svc") }}
+  # - name: config /etc/sysconfig/docker
+  #   template:
+  #     src: ../template/conf/docker
+  #     dest: /etc/sysconfig/
+  #   notify:
+  #     - restart {{ var_docker_engine.stdout | default("svc") }}
 
   - name: config docker daemon.json
     copy:
@@ -61,13 +61,13 @@
       - restart {{ var_docker_engine.stdout | default("svc") }}
       - enable {{ var_docker_engine.stdout | default("svc") }}
 
-  - name: config docker docker-storage      
-    lineinfile:
-      path: /etc/sysconfig/docker-storage
-      create: yes
-      state: present
-      mode: 644
-      line: DOCKER_STORAGE_OPTIONS="--storage-driver devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/docker-thinpool --storage-opt dm.use_deferred_removal=true --storage-opt dm.use_deferred_deletion=true"
-    notify:
-      - restart {{ var_docker_engine.stdout | default("svc") }}
-      - enable {{ var_docker_engine.stdout | default("svc") }}
+  # - name: config docker docker-storage      
+  #   lineinfile:
+  #     path: /etc/sysconfig/docker-storage
+  #     create: yes
+  #     state: present
+  #     mode: 644
+  #     line: DOCKER_STORAGE_OPTIONS="--storage-driver devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/docker-thinpool --storage-opt dm.use_deferred_removal=true --storage-opt dm.use_deferred_deletion=true"
+  #   notify:
+  #     - restart {{ var_docker_engine.stdout | default("svc") }}
+  #     - enable {{ var_docker_engine.stdout | default("svc") }}

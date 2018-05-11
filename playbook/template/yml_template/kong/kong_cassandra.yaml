@@ -83,7 +83,7 @@ spec:
           # - name: KONG_ADMIN_LISTEN
           #   value: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
 
-          # ---- 兼容 0.12
+          # ---- 兼容 0.12, 0.11
           - name: KONG_ADMIN_LISTEN
             value: 0.0.0.0:8001
           - name: KONG_ADMIN_LISTEN_SSL
